@@ -1,0 +1,21 @@
+name: .NET Core
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.100
+    - name: Restore Grats.Api.Test
+      run: dotnet restore Grats.Api.Test/Gratify.Grats.Api.Test.csproj
+    - name: Build Grats.Api.Test
+      run: dotnet build --no-restore --configuration Release Grats.Api.Test/Gratify.Grats.Api.Test.csproj
+    - name: Test Grats.Api.Test
+      run: dotnet test --no-restore --no-build --configuration Release Grats.Api.Test/Gratify.Grats.Api.Test.csproj
