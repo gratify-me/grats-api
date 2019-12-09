@@ -16,20 +16,31 @@ jobs:
         dotnet-version: 3.1.100
 
     - name: Restore Grats.Api.Test
-      run: dotnet restore Grats.Api.Test/Gratify.Grats.Api.Test.csproj
+      run: |
+        dotnet restore Grats.Api.Test/Gratify.Grats.Api.Test.csproj
 
     - name: Build Grats.Api.Test
-      run: dotnet build --no-restore --configuration Release Grats.Api.Test/Gratify.Grats.Api.Test.csproj
+      run: |
+        dotnet build Grats.Api.Test/Gratify.Grats.Api.Test.csproj \
+          --configuration Release \
+          --no-restore
 
     - name: Test Grats.Api.Test
-      run: dotnet test --no-restore --no-build --configuration Release Grats.Api.Test/Gratify.Grats.Api.Test.csproj
+      run: |
+        dotnet test Grats.Api.Test/Gratify.Grats.Api.Test.csproj \
+          --configuration Release \
+          --no-build
 
     - name: Publish Grats.Api
-      run: dotnet publish --configuration Release --output ${{env.DOTNET_ROOT}}/app Grats.Api/Gratify.Grats.Api.csproj
+      run: |
+        dotnet publish Grats.Api/Gratify.Grats.Api.csproj \
+          --output ${{env.DOTNET_ROOT}}/app \
+          --configuration Release \
+          --no-build
 
     - name: 'Deploy Grats.Api to Azure'
       uses: azure/webapps-deploy@v1
       with:
         app-name: grats-api
         publish-profile: ${{ secrets.GRATS_API_PUBLISH_PROFILE }}
-        package: ${{env.DOTNET_ROOT}}/app
+        package: ${{ env.DOTNET_ROOT }}/app
