@@ -38,9 +38,12 @@ jobs:
           --configuration Release \
           --no-build
 
+    - uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
     - name: 'Deploy Grats.Api to Azure'
       uses: azure/webapps-deploy@v1
       with:
         app-name: grats-api
-        publish-profile: ${{ secrets.GRATS_API_PUBLISH_PROFILE }}
         package: ${{ env.DOTNET_ROOT }}/app
