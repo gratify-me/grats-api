@@ -15,7 +15,6 @@ In addition you'll need a tool for editing C# code. [VS Code](https://code.visua
 If you want to run the deploy scripts locally, you'll also need to install [Azure CLI](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli?view=azure-cli-latest).
 
 ### Cloning, building and testing
-
 Start by cloning this repo:
 ```shell
 $> git clone https://github.com/gratify-me/grats-api.git
@@ -34,3 +33,37 @@ If you want to run the tests, navigate into the `grats-api/Grats.Api.Test/` fold
 ```shell
 $ grats-api/Grats.Api.Test> dotnet test
 ```
+
+Continous Integration
+---------------------
+
+### Generating secrets
+In order for the CI workflow to be able to login to Azure, the secret `AZURE_CREDENTIALS` has to be set.
+
+![Screenshot of the GitHub secrets settings page](Images/github-secrets-example.png)
+
+To generate the credentials, you'll have to generate a new service principal as shown below:
+```shell
+$> az ad sp create-for-rbac \
+    --name "GitHubDeployment" \
+    --role contributor \
+    --scopes /subscriptions/{subscription-id} \
+    --sdk-auth
+```
+
+The subscription-id can be found by running `az account show`.
+
+You can further scope down the Azure Credentials to the service principal by using the scopes attribute. For example, using `/subscriptions/{subscription-id}/resourceGroups/{resource-group}` would restrict access to a given resource group.
+
+The output of `az ad sp create-for-rbac` should be a json object, containing the login information for the GitHubDeployment service principal. Use this json object as the value for the `AZURE_CREDENTIALS` secret.
+```json
+{
+  "clientId": "<GUID>",
+  "clientSecret": "<GUID>",
+  "subscriptionId": "<GUID>",
+  "tenantId": "<GUID>",
+  (...)
+}
+```
+
+You can view the registered service principal in the Azure portal, by lookin at the [App registrations blade](https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/RegisteredApps) under Azure Active Directory.
