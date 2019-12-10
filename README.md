@@ -2,6 +2,8 @@ Gratify.Grats.Api
 =================
 _An API for sending, approving and receiving Grats._
 
+![CI status badge](https://github.com/gratify-me/grats-api/workflows/Grats.Api%20CI/badge.svg)
+
 Getting started
 ---------------
 
