@@ -2,6 +2,11 @@ name: Grats.Api CI
 
 on: [push]
 
+env:
+  GRATS_API_PROJECT: Grats.Api/Gratify.Grats.Api.csproj
+  GRATS_API_TEST_PROJECT: Grats.Api.Test/Gratify.Grats.Api.Test.csproj
+  RESOURCE_GROUP_NAME: Gratify
+
 jobs:
   build:
 
@@ -17,33 +22,53 @@ jobs:
 
     - name: Restore Grats.Api.Test
       run: |
-        dotnet restore Grats.Api.Test/Gratify.Grats.Api.Test.csproj
+        dotnet restore ${{env.GRATS_API_TEST_PROJECT}}
 
     - name: Build Grats.Api.Test
       run: |
-        dotnet build Grats.Api.Test/Gratify.Grats.Api.Test.csproj \
+        dotnet build ${{env.GRATS_API_TEST_PROJECT}} \
           --configuration Release \
           --no-restore
 
     - name: Test Grats.Api.Test
       run: |
-        dotnet test Grats.Api.Test/Gratify.Grats.Api.Test.csproj \
+        dotnet test ${{env.GRATS_API_TEST_PROJECT}} \
           --configuration Release \
           --no-build
 
     - name: Publish Grats.Api
       run: |
-        dotnet publish Grats.Api/Gratify.Grats.Api.csproj \
+        dotnet publish ${{env.GRATS_API_PROJECT}} \
           --output ${{env.DOTNET_ROOT}}/app \
           --configuration Release \
           --no-build
 
     - uses: azure/login@v1
       with:
-        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        creds: ${{secrets.AZURE_CREDENTIALS}}
 
-    - name: 'Deploy Grats.Api to Azure'
+    - name: Create resource group
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.0.72
+        inlineScript: |
+          az group create \
+            --verbose \
+            --location northeurope \
+            --name ${{env.RESOURCE_GROUP_NAME}}
+
+    - name: Deploy ARM template
+      uses: azure/CLI@v1
+      with:
+        azcliversion: 2.0.72
+        inlineScript: |
+          az group deployment create \
+            --verbose \
+            --resource-group ${{env.RESOURCE_GROUP_NAME}} \
+            --template-file arm-template.json
+
+    - name: 'Deploy Grats.Api'
       uses: azure/webapps-deploy@v1
       with:
         app-name: grats-api
-        package: ${{ env.DOTNET_ROOT }}/app
+        package: ${{env.DOTNET_ROOT}}/app
