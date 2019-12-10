@@ -2,6 +2,8 @@ Gratify.Grats.Api
 =================
 _An API for sending, approving and receiving Grats._
 
+![CI status badge](https://github.com/gratify-me/grats-api/workflows/Grats.Api%20CI/badge.svg)
+
 Getting started
 ---------------
 
@@ -36,6 +38,8 @@ $ grats-api/Grats.Api.Test> dotnet test
 
 Continous Integration
 ---------------------
+
+Continous Integration (CI) is handles by [GitHub Actions](https://help.github.com/en/actions), and the [built in Azure actions](https://github.com/Azure/actions) handles creation of [resource groups](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-overview), as well as deployment of [ARM templates](https://docs.microsoft.com/en-us/azure/azure-resource-manager/resource-group-authoring-templates) and applications.
 
 ### Generating secrets
 In order for the CI workflow to be able to login to Azure, the secret `AZURE_CREDENTIALS` has to be set.
