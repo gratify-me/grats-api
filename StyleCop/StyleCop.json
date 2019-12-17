@@ -6,7 +6,7 @@
       "blankLinesBetweenUsingGroups": "allow"
     },
     "maintainabilityRules": {
-      "topLevelTypes": []
+      "topLevelTypes": ["interface"]
     },
     "documentationRules": {
       "documentInterfaces": false,
