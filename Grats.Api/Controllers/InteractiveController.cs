@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using System.Web;
 using Gratify.Grats.Api.Dto;
 using Gratify.Grats.Api.Services;
@@ -24,7 +25,7 @@ namespace Gratify.Grats.Api.Controllers
         }
 
         [HttpPost]
-        public IActionResult ReceiveInteraction([FromForm(Name="payload")] string payload)
+        public async Task<IActionResult> ReceiveInteraction([FromForm(Name="payload")] string payload)
         {
             var json = HttpUtility.UrlDecode(payload, Encoding.UTF8);
             var interaction = JsonConvert.DeserializeObject<InteractionPayload>(json);
@@ -37,7 +38,7 @@ namespace Gratify.Grats.Api.Controllers
             });
 
             // https://api.slack.com/reference/messaging/payload
-            _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Grats sent!" });
+            await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Grats sent!" });
 
             return Ok(interaction.User.Username);
         }
