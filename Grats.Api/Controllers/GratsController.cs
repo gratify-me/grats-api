@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Text.RegularExpressions;
 using Gratify.Grats.Api.Dto;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
@@ -19,7 +18,7 @@ namespace Gratify.Grats.Api.Controllers
         }
 
         [HttpPost]
-        public string SendGrats([FromForm] SlashCommand slashCommand)
+        public IActionResult SendGrats([FromForm] SlashCommand slashCommand)
         {
             _telemetry.TrackEvent("Received Grats", new Dictionary<string, string>()
             {
@@ -28,45 +27,54 @@ namespace Gratify.Grats.Api.Controllers
                 { "Text", slashCommand.Text },
             });
 
-            var blocks = @"
+            var blocks = new
             {
-                ""blocks"": [
+                blocks = new object[]
+                {
+                    new
                     {
-                        ""type"": ""section"",
-                        ""text"": {
-                            ""type"": ""mrkdwn"",
-                            ""text"": ""Hi @slashCommand.UserName! Tell someone you appreciates them!""
-                        }
+                        type = "section",
+                        text = new
+                        {
+                            type = "mrkdwn",
+                            text = $"Hi @{slashCommand.UserName ?? "slackbot"}! Tell someone you appreciates them ❤",
+                        },
                     },
+                    new
                     {
-                        ""type"": ""actions"",
-                        ""elements"": [
+                        type = "actions",
+                        elements = new object[]
+                        {
+                            new
                             {
-                                ""type"": ""button"",
-                                ""text"": {
-                                    ""type"": ""plain_text"",
-                                    ""emoji"": true,
-                                    ""text"": ""Send Grats""
+                                type = "button",
+                                text = new
+                                {
+                                    type = "plain_text",
+                                    emoji = true,
+                                    text = "Send Grats"
                                 },
-                                ""style"": ""primary"",
-                                ""value"": ""send_grats""
+                                style = "primary",
+                                value = "send_grats",
                             },
+                            new
                             {
-                                ""type"": ""button"",
-                                ""text"": {
-                                    ""type"": ""plain_text"",
-                                    ""emoji"": true,
-                                    ""text"": ""Cancel""
+                                type = "button",
+                                text = new
+                                {
+                                    type = "plain_text",
+                                    emoji = true,
+                                    text = "Cancel"
                                 },
-                                ""style"": ""danger"",
-                                ""value"": ""cancel_send_grats""
-                            }
-                        ]
-                    }
-                ]
-            }";
+                                style = "danger",
+                                value = "cancel_send_grats",
+                            },
+                        },
+                    },
+                },
+            };
 
-            return Regex.Replace(blocks, "slashCommand.UserName", slashCommand.UserName);
+            return Ok(blocks);
         }
     }
 }
