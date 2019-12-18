@@ -1,3 +1,4 @@
+using Gratify.Grats.Api.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -7,6 +8,7 @@ using Microsoft.OpenApi.Models;
 
 namespace Gratify.Grats.Api
 {
+    // https://api.slack.com/docs/verifying-requests-from-slack
     public class Startup
     {
         private readonly OpenApiInfo _apiInfo = new OpenApiInfo
@@ -25,22 +27,21 @@ namespace Gratify.Grats.Api
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services
-                .AddSwaggerGen(c => c.SwaggerDoc(_apiInfo.Version, _apiInfo))
-                .AddControllers();
+            // https://docs.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests
+            services.AddHttpClient<ISlackService, SlackService>();
+            services.AddSwaggerGen(c => c.SwaggerDoc(_apiInfo.Version, _apiInfo));
+            services.AddControllers();
         }
 
         public void Configure(IApplicationBuilder application, IWebHostEnvironment environment)
         {
-            if (environment.IsDevelopment())
-            {
-                application
-                    .UseDeveloperExceptionPage()
-                    .UseSwaggerUI(c =>
-                    {
-                        c.SwaggerEndpoint("/swagger/v1/swagger.json", _apiInfo.Title);
-                    });
-            }
+            // TODO: This is nice for prototyping, but should be removed in production, and put inside "if (environment.IsDevelopment()) {...}"
+            application
+                .UseDeveloperExceptionPage()
+                .UseSwaggerUI(c =>
+                {
+                    c.SwaggerEndpoint("/swagger/v1/swagger.json", _apiInfo.Title);
+                });
 
             application
                 .UseSwagger()
