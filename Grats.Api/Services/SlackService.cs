@@ -19,7 +19,7 @@ namespace Gratify.Grats.Api.Services
         {
             var json = JsonConvert.SerializeObject(reply);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
-            using (var response = await _httpClient.PostAsync("/grats", content))
+            using (var response = await _httpClient.PostAsync(responseUrl, content))
             {
                 var contentStream = await response.Content.ReadAsStreamAsync();
                 using (var streamReader = new StreamReader(contentStream))
