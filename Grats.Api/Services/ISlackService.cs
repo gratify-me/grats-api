@@ -4,6 +4,6 @@ namespace Gratify.Grats.Api.Services
 {
     public interface ISlackService
     {
-        Task<string> ReplyToInteraction(string responseUrl, string reply);
+        Task<string> ReplyToInteraction(string responseUrl, object reply);
     }
 }

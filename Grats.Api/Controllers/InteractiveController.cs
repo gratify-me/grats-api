@@ -24,7 +24,7 @@ namespace Gratify.Grats.Api.Controllers
         }
 
         [HttpPost]
-        public string ReceiveInteraction([FromForm(Name="payload")] string payload)
+        public IActionResult ReceiveInteraction([FromForm(Name="payload")] string payload)
         {
             var json = HttpUtility.UrlDecode(payload, Encoding.UTF8);
             var interaction = JsonConvert.DeserializeObject<InteractionPayload>(json);
@@ -36,9 +36,10 @@ namespace Gratify.Grats.Api.Controllers
                 { "Payload", payload },
             });
 
-            _slackService.ReplyToInteraction(interaction.ResponseUrl, "Grats sent!");
+            // https://api.slack.com/reference/messaging/payload
+            _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Grats sent!" });
 
-            return interaction.User.Username;
+            return Ok(interaction.User.Username);
         }
     }
 }
