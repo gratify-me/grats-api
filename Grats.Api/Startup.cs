@@ -27,6 +27,8 @@ namespace Gratify.Grats.Api
 
         public void ConfigureServices(IServiceCollection services)
         {
+            // https://docs.microsoft.com/en-us/azure/azure-monitor/app/asp-net-core
+            services.AddApplicationInsightsTelemetry();
             // https://docs.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests
             services.AddHttpClient<ISlackService, SlackService>();
             services.AddSwaggerGen(c => c.SwaggerDoc(_apiInfo.Version, _apiInfo));

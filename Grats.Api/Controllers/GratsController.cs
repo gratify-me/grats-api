@@ -1,5 +1,7 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Gratify.Grats.Api.Dto;
+using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 
 // https://api.slack.com/interactivity/slash-commands
@@ -9,9 +11,23 @@ namespace Gratify.Grats.Api.Controllers
     [Route("[controller]")]
     public class GratsController : ControllerBase
     {
+        private TelemetryClient _telemetry;
+
+        public GratsController(TelemetryClient telemetry)
+        {
+            _telemetry = telemetry;
+        }
+
         [HttpPost]
         public string SendGrats([FromForm] SlashCommand slashCommand)
         {
+            _telemetry.TrackEvent("Received Grats", new Dictionary<string, string>()
+            {
+                { "UserName", slashCommand.UserName },
+                { "Command", slashCommand.Command },
+                { "Text", slashCommand.Text },
+            });
+
             var blocks = @"
             {
                 ""blocks"": [
