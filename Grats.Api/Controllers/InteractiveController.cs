@@ -64,7 +64,15 @@ namespace Gratify.Grats.Api.Controllers
             }
             else if (Interaction.ApproveGrats.Is(interaction))
             {
-                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Grats approved!" });
+                await Task.WhenAll(new Task[]
+                {
+                    _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Grats approved!" }),
+                    _slackService.SendMessage(new
+                    {
+                        channel = interaction.User.Id,
+                        text = $"Congratulations! @{interaction.User.Name ?? "slackbot"} just sent you grats 🎉",
+                    }),
+                });
             }
             else if (Interaction.DenyGrats.Is(interaction))
             {
