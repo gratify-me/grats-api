@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -37,8 +38,15 @@ namespace Gratify.Grats.Api.Controllers
                 { "Payload", payload },
             });
 
-            // https://api.slack.com/reference/messaging/payload
-            await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Grats sent!" });
+            if (interaction.Actions.Any(action => action.Value == "send_grats"))
+            {
+                // https://api.slack.com/reference/messaging/payload
+                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Grats sent!" });
+            }
+            else
+            {
+                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Ok! Maybe next time :-)" });
+            }
 
             return Ok(interaction.User.Username);
         }
