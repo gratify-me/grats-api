@@ -28,6 +28,11 @@ namespace Gratify.Grats.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> ReceiveInteraction([FromForm(Name="payload")] string payload)
         {
+            if (payload == null)
+            {
+                return BadRequest("Payload cannot be empty");
+            }
+
             var json = HttpUtility.UrlDecode(payload, Encoding.UTF8);
             var interaction = JsonConvert.DeserializeObject<InteractionPayload>(json);
 
@@ -38,17 +43,92 @@ namespace Gratify.Grats.Api.Controllers
                 { "Payload", payload },
             });
 
-            if (interaction.Actions.Any(action => action.Value == "send_grats"))
+            await HandleInteraction(interaction);
+
+            return Ok(interaction.User.Username);
+        }
+
+        private async Task HandleInteraction(InteractionPayload interaction)
+        {
+            if (Interaction.SendGrats.Is(interaction))
             {
-                // https://api.slack.com/reference/messaging/payload
-                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Grats sent!" });
+                await Task.WhenAll(new Task[]
+                {
+                    _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Grats sent!" }),
+                    RequestGratsApproval(interaction),
+                });
+            }
+            else if (Interaction.CancelSendGrats.Is(interaction))
+            {
+                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "OK! Maybe next time 😊" });
+            }
+            else if (Interaction.ApproveGrats.Is(interaction))
+            {
+                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Grats approved!" });
+            }
+            else if (Interaction.DenyGrats.Is(interaction))
+            {
+                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "That's OK for now (but in the future you might have to do more to deny grats 😉" });
             }
             else
             {
-                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Ok! Maybe next time :-)" });
+                // https://api.slack.com/reference/messaging/payload
+                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Whoops! Looks like something went wrong 💩" });
             }
+        }
 
-            return Ok(interaction.User.Username);
+        private async Task RequestGratsApproval(InteractionPayload interaction)
+        {
+            var blocks = new
+            {
+                channel = interaction.User.Id,
+                text = $"@{interaction.User.Name ?? "slackbot"} wants to send grats to @{interaction.User.Name ?? "slackbot"}!",
+                blocks = new object[]
+                {
+                    new
+                    {
+                        type = "section",
+                        text = new
+                        {
+                            type = "mrkdwn",
+                            text = $"@{interaction.User.Name ?? "slackbot"} wants to send grats to @{interaction.User.Name ?? "slackbot"}!",
+                        },
+                    },
+                    new
+                    {
+                        type = "actions",
+                        elements = new object[]
+                        {
+                            new
+                            {
+                                type = "button",
+                                text = new
+                                {
+                                    type = "plain_text",
+                                    emoji = true,
+                                    text = "Approve"
+                                },
+                                style = "primary",
+                                value = Interaction.ApproveGrats.Id,
+                            },
+                            new
+                            {
+                                type = "button",
+                                text = new
+                                {
+                                    type = "plain_text",
+                                    emoji = true,
+                                    text = "Deny"
+                                },
+                                style = "danger",
+                                value = Interaction.DenyGrats.Id,
+                            },
+                        },
+                    },
+                },
+            };
+
+            await _slackService.SendMessage(blocks);
         }
     }
 }

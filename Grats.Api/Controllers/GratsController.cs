@@ -29,6 +29,7 @@ namespace Gratify.Grats.Api.Controllers
 
             var blocks = new
             {
+                text = $"Hi @{slashCommand.UserName ?? "slackbot"}!", // Text section is used on notifications, or other places blocks cannot be shown.
                 blocks = new object[]
                 {
                     new
@@ -55,7 +56,7 @@ namespace Gratify.Grats.Api.Controllers
                                     text = "Send Grats"
                                 },
                                 style = "primary",
-                                value = "send_grats",
+                                value = Interaction.SendGrats.Id,
                             },
                             new
                             {
@@ -67,7 +68,7 @@ namespace Gratify.Grats.Api.Controllers
                                     text = "Cancel"
                                 },
                                 style = "danger",
-                                value = "cancel_send_grats",
+                                value = Interaction.CancelSendGrats.Id,
                             },
                         },
                     },

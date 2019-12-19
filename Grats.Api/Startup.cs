@@ -1,3 +1,4 @@
+using System.Net.Http.Headers;
 using Gratify.Grats.Api.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -30,7 +31,13 @@ namespace Gratify.Grats.Api
             // https://docs.microsoft.com/en-us/azure/azure-monitor/app/asp-net-core
             services.AddApplicationInsightsTelemetry();
             // https://docs.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests
-            services.AddHttpClient<ISlackService, SlackService>();
+            services.AddHttpClient<ISlackService, SlackService>(client =>
+            {
+                if (Configuration["SlackApiToken"] != null)
+                {
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Configuration["SlackApiToken"]);
+                }
+            });
             services.AddSwaggerGen(c => c.SwaggerDoc(_apiInfo.Version, _apiInfo));
             services.AddControllers();
         }
