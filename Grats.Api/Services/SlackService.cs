@@ -44,5 +44,27 @@ namespace Gratify.Grats.Api.Services
                 }
             }
         }
+
+        // https://api.slack.com/surfaces/modals/using
+        public async Task<string> OpenModal(string triggerId, object modal)
+        {
+            var url = $"{SlackApiUrl}/views.open";
+            var payload = new
+            {
+                trigger_id = triggerId,
+                view = modal,
+            };
+
+            var json = JsonConvert.SerializeObject(payload);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            using (var response = await _httpClient.PostAsync(url, content))
+            {
+                var contentStream = await response.Content.ReadAsStreamAsync();
+                using (var streamReader = new StreamReader(contentStream))
+                {
+                    return await streamReader.ReadToEndAsync();
+                }
+            }
+        }
     }
 }

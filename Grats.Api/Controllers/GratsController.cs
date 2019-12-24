@@ -1,5 +1,7 @@
 ﻿using System.Collections.Generic;
+using System.Threading.Tasks;
 using Gratify.Grats.Api.Dto;
+using Gratify.Grats.Api.Services;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 
@@ -10,15 +12,17 @@ namespace Gratify.Grats.Api.Controllers
     [Route("[controller]")]
     public class GratsController : ControllerBase
     {
+        private readonly ISlackService _slackService;
         private TelemetryClient _telemetry;
 
-        public GratsController(TelemetryClient telemetry)
+        public GratsController(ISlackService slackService, TelemetryClient telemetry)
         {
+            _slackService = slackService;
             _telemetry = telemetry;
         }
 
         [HttpPost]
-        public IActionResult SendGrats([FromForm] SlashCommand slashCommand)
+        public async Task<IActionResult> SendGrats([FromForm] SlashCommand slashCommand)
         {
             _telemetry.TrackEvent("Received Grats", new Dictionary<string, string>()
             {
@@ -27,55 +31,81 @@ namespace Gratify.Grats.Api.Controllers
                 { "Text", slashCommand.Text },
             });
 
-            var blocks = new
+            var modal = new
             {
-                text = $"Hi @{slashCommand.UserName ?? "slackbot"}!", // Text section is used on notifications, or other places blocks cannot be shown.
+                type = "modal",
+                title = new
+                {
+                    type = "plain_text",
+                    text = "Send Grats",
+                    emoji = true,
+                },
+                submit = new
+                {
+                    type = "plain_text",
+                    text = "Send Grats",
+                    emoji = true,
+                },
+                close = new
+                {
+                    type = "plain_text",
+                    text = "Cancel",
+                    emoji = true,
+                },
                 blocks = new object[]
                 {
                     new
                     {
-                        type = "section",
-                        text = new
+                        type = "input",
+                        element = new
                         {
-                            type = "mrkdwn",
-                            text = $"Hi @{slashCommand.UserName ?? "slackbot"}! Tell someone you appreciates them ❤",
+                            type = "users_select",
+                            placeholder = new
+                            {
+                                type = "plain_text",
+                                text = "Select a user",
+                                emoji = true,
+                            },
+                        },
+                        label = new
+                        {
+                            type = "plain_text",
+                            text = "Who should receive Grats?",
+                            emoji = true,
                         },
                     },
                     new
                     {
-                        type = "actions",
-                        elements = new object[]
+                        type = "input",
+                        element = new
                         {
-                            new
+                            type = "plain_text_input",
+                            multiline = true,
+                            placeholder = new
                             {
-                                type = "button",
-                                text = new
-                                {
-                                    type = "plain_text",
-                                    emoji = true,
-                                    text = "Send Grats"
-                                },
-                                style = "primary",
-                                value = Interaction.SendGrats.Id,
+                                type = "plain_text",
+                                text = "A short and concrete description",
+                                emoji = true,
                             },
-                            new
-                            {
-                                type = "button",
-                                text = new
-                                {
-                                    type = "plain_text",
-                                    emoji = true,
-                                    text = "Cancel"
-                                },
-                                style = "danger",
-                                value = Interaction.CancelSendGrats.Id,
-                            },
+                        },
+                        label = new
+                        {
+                            type = "plain_text",
+                            text = "Why should they receive Grats?",
+                            emoji = true,
                         },
                     },
                 },
             };
 
-            return Ok(blocks);
+            var response = await _slackService.OpenModal(slashCommand.TriggerId, modal);
+            _telemetry.TrackEvent("Open Modal Response", new Dictionary<string, string>()
+            {
+                { "TriggerId", slashCommand.TriggerId },
+                { "Response", response },
+            });
+
+            return Ok($"Hi @{slashCommand.UserName ?? "slackbot"}!");
         }
     }
 }
