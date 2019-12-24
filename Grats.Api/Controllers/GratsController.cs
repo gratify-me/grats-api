@@ -110,7 +110,7 @@ namespace Gratify.Grats.Api.Controllers
                 { "Response", response },
             });
 
-            return Ok($"Hi @{slashCommand.UserName ?? "slackbot"}!");
+            return Ok();
         }
     }
 }

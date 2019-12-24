@@ -36,7 +36,7 @@ namespace Gratify.Grats.Api.Test
             };
 
             var response = await _client.Grats(slackSlashCommand);
-            response.Should().Contain("Hi @teodor!");
+            response.Should().BeEmpty();
         }
 
         public void Dispose() => _client.Dispose();
