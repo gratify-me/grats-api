@@ -4,10 +4,6 @@ namespace Gratify.Grats.Api.Dto
 {
     public class Interaction
     {
-        public static Interaction SendGrats => new Interaction("send_grats");
-
-        public static Interaction CancelSendGrats => new Interaction("cancel_send_grats");
-
         public static Interaction ApproveGrats => new Interaction("approve_grats");
 
         public static Interaction DenyGrats => new Interaction("deny_grats");
