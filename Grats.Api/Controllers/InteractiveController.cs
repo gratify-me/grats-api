@@ -34,6 +34,22 @@ namespace Gratify.Grats.Api.Controllers
             }
 
             var json = HttpUtility.UrlDecode(payload, Encoding.UTF8);
+            var type = JsonConvert.DeserializeObject<PayloadType>(json);
+            if (type.IsViewSubmission)
+            {
+                var submission = JsonConvert.DeserializeObject<GratsViewSubmission>(json);
+
+                _telemetry.TrackEvent("Received Submission", new Dictionary<string, string>()
+                {
+                    { "UserName", submission.User.Name },
+                    { "Payload", payload },
+                });
+
+                await RequestGratsApproval(submission);
+
+                return Ok(submission.User.Username);
+            }
+
             var interaction = JsonConvert.DeserializeObject<InteractionPayload>(json);
 
             _telemetry.TrackEvent("Received Interaction", new Dictionary<string, string>()
@@ -50,19 +66,7 @@ namespace Gratify.Grats.Api.Controllers
 
         private async Task HandleInteraction(InteractionPayload interaction)
         {
-            if (Interaction.SendGrats.Is(interaction))
-            {
-                await Task.WhenAll(new Task[]
-                {
-                    _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Grats sent!" }),
-                    RequestGratsApproval(interaction),
-                });
-            }
-            else if (Interaction.CancelSendGrats.Is(interaction))
-            {
-                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "OK! Maybe next time 😊" });
-            }
-            else if (Interaction.ApproveGrats.Is(interaction))
+            if (Interaction.ApproveGrats.Is(interaction))
             {
                 await Task.WhenAll(new Task[]
                 {
@@ -85,12 +89,12 @@ namespace Gratify.Grats.Api.Controllers
             }
         }
 
-        private async Task RequestGratsApproval(InteractionPayload interaction)
+        private async Task RequestGratsApproval(GratsViewSubmission submission)
         {
             var blocks = new
             {
-                channel = interaction.User.Id,
-                text = $"@{interaction.User.Name ?? "slackbot"} wants to send grats to @{interaction.User.Name ?? "slackbot"}!",
+                channel = submission.User.Id,
+                text = $"@{submission.User.Name ?? "slackbot"} wants to send grats to @{submission.User.Name ?? "slackbot"}!",
                 blocks = new object[]
                 {
                     new
@@ -99,7 +103,7 @@ namespace Gratify.Grats.Api.Controllers
                         text = new
                         {
                             type = "mrkdwn",
-                            text = $"@{interaction.User.Name ?? "slackbot"} wants to send grats to @{interaction.User.Name ?? "slackbot"}!",
+                            text = $"@{submission.User.Name ?? "slackbot"} wants to send grats to @{submission.User.Name ?? "slackbot"}!",
                         },
                     },
                     new

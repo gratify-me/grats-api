@@ -34,6 +34,7 @@ namespace Gratify.Grats.Api.Controllers
             var modal = new
             {
                 type = "modal",
+                callback_id = "send-grats-modal",
                 title = new
                 {
                     type = "plain_text",
@@ -57,9 +58,11 @@ namespace Gratify.Grats.Api.Controllers
                     new
                     {
                         type = "input",
+                        block_id = "select_user",
                         element = new
                         {
                             type = "users_select",
+                            action_id = "user_selected",
                             placeholder = new
                             {
                                 type = "plain_text",
@@ -77,9 +80,11 @@ namespace Gratify.Grats.Api.Controllers
                     new
                     {
                         type = "input",
+                        block_id = "grats_message",
                         element = new
                         {
                             type = "plain_text_input",
+                            action_id = "grats_message_written",
                             multiline = true,
                             placeholder = new
                             {
