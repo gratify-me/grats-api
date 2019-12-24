@@ -26,7 +26,7 @@ namespace Gratify.Grats.Api.Test
             };
 
             var response = await _client.Interactive(slackInteractivePayload);
-            response.Should().Contain("teodor");
+            response.Should().BeEmpty();
         }
 
         public void Dispose() => _client.Dispose();

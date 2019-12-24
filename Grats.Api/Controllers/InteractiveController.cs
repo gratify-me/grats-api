@@ -47,7 +47,7 @@ namespace Gratify.Grats.Api.Controllers
 
                 await RequestGratsApproval(submission);
 
-                return Ok(submission.User.Username);
+                return Ok();
             }
 
             var interaction = JsonConvert.DeserializeObject<InteractionPayload>(json);
@@ -61,7 +61,7 @@ namespace Gratify.Grats.Api.Controllers
 
             await HandleInteraction(interaction);
 
-            return Ok(interaction.User.Username);
+            return Ok();
         }
 
         private async Task HandleInteraction(InteractionPayload interaction)
