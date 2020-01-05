@@ -1,7 +1,9 @@
+using System;
 using System.IO;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Gratify.Grats.Api.Dto;
 using Newtonsoft.Json;
 
 namespace Gratify.Grats.Api.Services
@@ -26,6 +28,34 @@ namespace Gratify.Grats.Api.Services
                 using (var streamReader = new StreamReader(contentStream))
                 {
                     return await streamReader.ReadToEndAsync();
+                }
+            }
+        }
+
+        public async Task<Channel> GetAppChannel(User user)
+        {
+            var url = $"{SlackApiUrl}/conversations.open";
+            var message = new
+            {
+                users = user.Id,
+            };
+
+            var json = JsonConvert.SerializeObject(message);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            using (var response = await _httpClient.PostAsync(url, content))
+            {
+                var contentStream = await response.Content.ReadAsStreamAsync();
+                using (var streamReader = new StreamReader(contentStream))
+                using (JsonReader jsonReader = new JsonTextReader(streamReader))
+                {
+                    var serializer = new JsonSerializer();
+                    var openResponse = serializer.Deserialize<ConversationsOpenResponse>(jsonReader);
+                    if (!openResponse.Ok)
+                    {
+                        throw new Exception(openResponse.Error);
+                    }
+
+                    return openResponse.Channel;
                 }
             }
         }
