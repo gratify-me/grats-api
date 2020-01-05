@@ -35,7 +35,7 @@ namespace Gratify.Grats.Api
             {
                 if (Configuration["SlackApiToken"] != null)
                 {
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Configuration["SlackApiToken"]);
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Configuration["SlackApiBotUserToken"]);
                 }
             });
             services.AddSwaggerGen(c => c.SwaggerDoc(_apiInfo.Version, _apiInfo));
@@ -54,7 +54,8 @@ namespace Gratify.Grats.Api
 
             application
                 .UseSwagger()
-                .UseHttpsRedirection()
+                // TODO: This breaks ngrok, and with that, local proxying against slack. Should disable this for local development.
+                // .UseHttpsRedirection()
                 .UseRouting()
                 .UseAuthorization()
                 .UseEndpoints(endpoints => endpoints.MapControllers());
