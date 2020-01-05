@@ -68,12 +68,13 @@ namespace Gratify.Grats.Api.Controllers
         {
             if (Interaction.ApproveGrats.Is(interaction))
             {
+                var channel = await _slackService.GetAppChannel(interaction.User);
                 await Task.WhenAll(new Task[]
                 {
                     _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Grats approved!" }),
                     _slackService.SendMessage(new
                     {
-                        channel = interaction.User.Id,
+                        channel = channel.Id,
                         text = $"Congratulations! @{interaction.User.Name ?? "slackbot"} just sent you grats 🎉",
                     }),
                 });
@@ -91,9 +92,10 @@ namespace Gratify.Grats.Api.Controllers
 
         private async Task RequestGratsApproval(GratsViewSubmission submission)
         {
+            var channel = await _slackService.GetAppChannel(submission.User);
             var blocks = new
             {
-                channel = submission.User.Id,
+                channel = channel.Id,
                 text = $"@{submission.User.Name ?? "slackbot"} wants to send grats to @{submission.User.Name ?? "slackbot"}!",
                 blocks = new object[]
                 {
