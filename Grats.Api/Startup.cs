@@ -33,7 +33,7 @@ namespace Gratify.Grats.Api
             // https://docs.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests
             services.AddHttpClient<ISlackService, SlackService>(client =>
             {
-                if (Configuration["SlackApiToken"] != null)
+                if (Configuration["SlackApiBotUserToken"] != null)
                 {
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Configuration["SlackApiBotUserToken"]);
                 }
