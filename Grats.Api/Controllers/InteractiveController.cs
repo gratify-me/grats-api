@@ -71,7 +71,7 @@ namespace Gratify.Grats.Api.Controllers
                 var channel = await _slackService.GetAppChannel(interaction.User);
                 await Task.WhenAll(new Task[]
                 {
-                    _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Grats approved!" }),
+                    _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Grats approved ✔" }),
                     _slackService.SendMessage(new
                     {
                         channel = channel.Id,
@@ -81,7 +81,7 @@ namespace Gratify.Grats.Api.Controllers
             }
             else if (Interaction.DenyGrats.Is(interaction))
             {
-                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "That's OK for now (but in the future you might have to do more to deny grats 😉" });
+                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "That's OK for now (but in the future you might have to do more to deny grats 😉)" });
             }
             else
             {
@@ -92,11 +92,13 @@ namespace Gratify.Grats.Api.Controllers
 
         private async Task RequestGratsApproval(GratsViewSubmission submission)
         {
+            var userToReceiveGrats = submission.View.State.Values.SelectUser.UsersSelect.SelectedUser;
+            var gratsReason = submission.View.State.Values.GratsMessage.PlainTextInput.Value;
             var channel = await _slackService.GetAppChannel(submission.User);
             var blocks = new
             {
                 channel = channel.Id,
-                text = $"@{submission.User.Name ?? "slackbot"} wants to send grats to @{submission.User.Name ?? "slackbot"}!",
+                text = $"<@{submission.User.Id}> wants to send grats to <@{userToReceiveGrats}>!",
                 blocks = new object[]
                 {
                     new
@@ -105,7 +107,16 @@ namespace Gratify.Grats.Api.Controllers
                         text = new
                         {
                             type = "mrkdwn",
-                            text = $"@{submission.User.Name ?? "slackbot"} wants to send grats to @{submission.User.Name ?? "slackbot"}!",
+                            text = $"<@{submission.User.Id}> wants to send grats to <@{userToReceiveGrats}>!",
+                        },
+                    },
+                    new
+                    {
+                        type = "section",
+                        text = new
+                        {
+                            type = "mrkdwn",
+                            text = $"*Reason:*\n_{gratsReason}_",
                         },
                     },
                     new
