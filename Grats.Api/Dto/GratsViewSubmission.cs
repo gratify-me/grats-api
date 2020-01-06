@@ -32,12 +32,45 @@ namespace Gratify.Grats.Api.Dto
     public class View
     {
         [JsonProperty("state")]
-        public State Type { get; set; }
+        public State State { get; set; }
     }
 
     public class State
     {
         [JsonProperty("values")]
-        public Dictionary<string, Dictionary<string, Dictionary<string, string>>> Values { get; set; }
+        public StateValues Values { get; set; }
+    }
+
+    public class StateValues
+    {
+        [JsonProperty("select_user")]
+        public SelectUser SelectUser { get; set; }
+
+        [JsonProperty("grats_message")]
+        public GratsMessage GratsMessage { get; set; }
+    }
+
+    public class SelectUser
+    {
+        [JsonProperty("user_selected")]
+        public UsersSelect UsersSelect { get; set; }
+    }
+
+    public class UsersSelect
+    {
+        [JsonProperty("selected_user")]
+        public string SelectedUser { get; set; }
+    }
+
+    public class GratsMessage
+    {
+        [JsonProperty("grats_message_written")]
+        public PlainTextInput PlainTextInput { get; set; }
+    }
+
+    public class PlainTextInput
+    {
+        [JsonProperty("value")]
+        public string Value { get; set; }
     }
 }
