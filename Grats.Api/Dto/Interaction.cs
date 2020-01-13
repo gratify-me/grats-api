@@ -15,6 +15,19 @@ namespace Gratify.Grats.Api.Dto
             Id = id;
         }
 
-        public bool Is(InteractionPayload interaction) => interaction.Actions.Any(action => action.Value == Id);
+        public bool Is(InteractionPayload interaction, out int gratsId)
+        {
+            var anAction = interaction.Actions.FirstOrDefault(action => action.Value.Contains(Id));
+            if (anAction != null)
+            {
+                gratsId = int.Parse(anAction.Value.Split('|')[1]);
+                return true;
+            }
+            else
+            {
+                gratsId = -1;
+                return false;
+            }
+        }
     }
 }
