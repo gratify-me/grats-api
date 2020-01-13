@@ -1,7 +1,9 @@
 using System.Net.Http.Headers;
+using Gratify.Grats.Api.Database;
 using Gratify.Grats.Api.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -40,6 +42,16 @@ namespace Gratify.Grats.Api
             });
             services.AddSwaggerGen(c => c.SwaggerDoc(_apiInfo.Version, _apiInfo));
             services.AddControllers();
+
+            var connectionString = Configuration.GetConnectionString("GratsDb");
+            if (connectionString.Contains('<'))
+            {
+                services.AddDbContext<GratsDb>(options => options.UseInMemoryDatabase("Grats.Api.Database.InMemory"));
+            }
+            else
+            {
+                services.AddDbContext<GratsDb>(options => options.UseSqlServer(connectionString));
+            }
         }
 
         public void Configure(IApplicationBuilder application, IWebHostEnvironment environment)
