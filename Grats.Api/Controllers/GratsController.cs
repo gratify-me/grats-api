@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
+using Gratify.Grats.Api.Database;
 using Gratify.Grats.Api.Dto;
 using Gratify.Grats.Api.Services;
 using Microsoft.ApplicationInsights;
@@ -13,11 +14,13 @@ namespace Gratify.Grats.Api.Controllers
     public class GratsController : ControllerBase
     {
         private readonly ISlackService _slackService;
-        private TelemetryClient _telemetry;
+        private readonly GratsDb _database;
+        private readonly TelemetryClient _telemetry;
 
-        public GratsController(ISlackService slackService, TelemetryClient telemetry)
+        public GratsController(ISlackService slackService, GratsDb database, TelemetryClient telemetry)
         {
             _slackService = slackService;
+            _database = database;
             _telemetry = telemetry;
         }
 
