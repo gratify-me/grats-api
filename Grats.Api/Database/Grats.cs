@@ -23,8 +23,7 @@ namespace Gratify.Grats.Api.Database
         [MaxLength(100)]
         public string Approver { get; set; }
 
-        [Required]
-        public bool IsApproved { get; set; }
+        public bool? IsApproved { get; set; }
 
         [Required]
         [MinLength(1)]

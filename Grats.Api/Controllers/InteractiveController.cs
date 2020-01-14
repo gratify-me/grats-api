@@ -77,6 +77,14 @@ namespace Gratify.Grats.Api.Controllers
             }
             else if (Interaction.DenyGrats.Is(interaction, out gratsId))
             {
+                var grats = await _database.Grats.FindAsync(gratsId);
+                if (grats.IsApproved.HasValue)
+                {
+                    await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Already handled" });
+                    return;
+                }
+
+                grats.IsApproved = false;
                 await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "That's OK for now (but in the future you might have to do more to deny grats 😉)" });
             }
             else
@@ -93,7 +101,6 @@ namespace Gratify.Grats.Api.Controllers
                 Sender = submission.User.Id,
                 Content = submission.View.State.Values.GratsMessage.PlainTextInput.Value,
                 Approver = submission.User.Id,
-                IsApproved = false,
                 Receiver = submission.View.State.Values.SelectUser.UsersSelect.SelectedUser,
             };
 
@@ -165,6 +172,12 @@ namespace Gratify.Grats.Api.Controllers
         private async Task ApproveGrats(InteractionPayload interaction, int gratsId)
         {
             var grats = await _database.Grats.FindAsync(gratsId);
+            if (grats.IsApproved.HasValue)
+            {
+                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Already handled" });
+                return;
+            }
+
             grats.IsApproved = true;
 
             var channel = await _slackService.GetAppChannel(new Dto.User { Id = grats.Receiver });
