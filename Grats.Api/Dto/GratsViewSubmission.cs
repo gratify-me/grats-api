@@ -33,6 +33,12 @@ namespace Gratify.Grats.Api.Dto
     {
         [JsonProperty("state")]
         public State State { get; set; }
+
+        [JsonProperty("callback_id")]
+        public string CallbackId { get; set; }
+
+        [JsonProperty("hash")]
+        public string Hash { get; set; }
     }
 
     public class State
