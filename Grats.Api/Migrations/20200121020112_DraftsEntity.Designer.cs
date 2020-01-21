@@ -4,14 +4,16 @@ using Gratify.Grats.Api.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Gratify.Grats.Api.Migrations
 {
     [DbContext(typeof(GratsDb))]
-    partial class GratsDbModelSnapshot : ModelSnapshot
+    [Migration("20200121020112_DraftsEntity")]
+    partial class DraftsEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

@@ -13,14 +13,13 @@ namespace Gratify.Grats.Api.Database
         [MaxLength(100)]
         public string Sender { get; set; }
 
-        [Required]
         [MinLength(1)]
         [MaxLength(500)]
         public string Content { get; set; }
 
+        [Required]
         public bool IsSubmitted { get; set; }
 
-        [Required]
         [MinLength(1)]
         [MaxLength(100)]
         public string Receiver { get; set; }
