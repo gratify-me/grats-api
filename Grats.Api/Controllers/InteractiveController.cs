@@ -40,7 +40,6 @@ namespace Gratify.Grats.Api.Controllers
             var type = JsonConvert.DeserializeObject<PayloadType>(json);
             if (type.IsViewSubmission)
             {
-                // TODO: Validate submission, and update modal with validation messages if needed.
                 var submission = JsonConvert.DeserializeObject<GratsViewSubmission>(json);
 
                 _telemetry.TrackEvent("Received Submission", new Dictionary<string, string>()
@@ -49,9 +48,32 @@ namespace Gratify.Grats.Api.Controllers
                     { "Payload", payload },
                 });
 
-                await RequestGratsApproval(submission);
+                if (Submission.SendGrats.Is(submission, out var draftId))
+                {
+                    var draft = await _database.Drafts.FindAsync(draftId);
+                    if (!draft.IsSubmitted)
+                    {
+                        // TODO: Could be removed, since we're not going to need this when using view.id
+                        // draft.Content = submission.View.State.Values.GratsMessage.PlainTextInput.Value;
+                        // draft.Receiver = submission.View.State.Values.SelectUser.UsersSelect.SelectedUser;
+                        var receiver = submission.View.State.Values.SelectUser.UsersSelect.SelectedUser;
+                        if (receiver == "USLACKBOT")
+                        {
+                            return ShowErrors();
+                        }
+                        else
+                        {
+                            draft.IsSubmitted = true;
+                            await _database.SaveChangesAsync();
+                            await RequestGratsApproval(submission);
+                        }
+                    }
+                }
 
-                return Ok();
+                return Ok(new
+                {
+                    response_action = "clear",
+                });
             }
 
             var interaction = JsonConvert.DeserializeObject<InteractionPayload>(json);
@@ -80,17 +102,29 @@ namespace Gratify.Grats.Api.Controllers
                 var grats = await _database.Grats.FindAsync(gratsId);
                 if (grats.IsApproved.HasValue)
                 {
-                    await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Already handled" });
+                    await _slackService.ReplyToInteraction(interaction.ResponseUrl, new
+                    {
+                        text = "Already handled",
+                        response_type = "ephemeral",
+                    });
                     return;
                 }
 
                 grats.IsApproved = false;
-                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "That's OK for now (but in the future you might have to do more to deny grats 😉)" });
+                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new
+                {
+                    text = "That's OK for now (but in the future you might have to do more to deny grats 😉)",
+                    response_type = "ephemeral",
+                });
             }
             else
             {
                 // https://api.slack.com/reference/messaging/payload
-                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Whoops! Looks like something went wrong 💩" });
+                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new
+                {
+                    text = "Whoops! Looks like something went wrong 💩",
+                    response_type = "ephemeral",
+                });
             }
         }
 
@@ -254,6 +288,117 @@ namespace Gratify.Grats.Api.Controllers
                 _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Grats approved ✔" }),
                 _slackService.SendMessage(blocks),
             });
+        }
+
+        private IActionResult ShowErrors()
+        {
+            var errors = new
+            {
+                response_action = "errors",
+                errors = new
+                {
+                    select_user = $"Cannot send grats to Slackbot", // select_user is block_id of element with error.
+                },
+            };
+
+            return Ok(errors);
+        }
+
+        // Reply can also post a completely new modal if needed.
+        // Can also fill inputs with data from custom providers and more.
+        private IActionResult ReplyInvalidGrats(Draft draft)
+        {
+            var modal = new
+            {
+                type = "modal",
+                callback_id = $"send-grats-modal|{draft.Id}",
+                title = new
+                {
+                    type = "plain_text",
+                    text = "Send Grats",
+                    emoji = true,
+                },
+                submit = new
+                {
+                    type = "plain_text",
+                    text = "Send Grats",
+                    emoji = true,
+                },
+                close = new
+                {
+                    type = "plain_text",
+                    text = "Cancel",
+                    emoji = true,
+                },
+                blocks = new object[]
+                {
+                    new
+                    {
+                        type = "input",
+                        block_id = "select_user",
+                        element = new
+                        {
+                            type = "users_select",
+                            action_id = "user_selected",
+                            placeholder = new
+                            {
+                                type = "plain_text",
+                                text = "Select a user",
+                                emoji = true,
+                            },
+                        },
+                        label = new
+                        {
+                            type = "plain_text",
+                            text = "Who should receive Grats?",
+                            emoji = true,
+                        },
+                    },
+                    new
+                    {
+                        type = "context",
+                        elements = new object[]
+                        {
+                            new
+                            {
+                                type = "mrkdwn",
+                                text = $":heavy_multiplication_x: Cannot send grats to <@{draft.Receiver}>",
+                            },
+                        },
+                    },
+                    new
+                    {
+                        type = "input",
+                        block_id = "grats_message",
+                        element = new
+                        {
+                            type = "plain_text_input",
+                            action_id = "grats_message_written",
+                            multiline = true,
+                            placeholder = new
+                            {
+                                type = "plain_text",
+                                text = "A short and concrete description",
+                                emoji = true,
+                            },
+                        },
+                        label = new
+                        {
+                            type = "plain_text",
+                            text = "Why should they receive Grats?",
+                            emoji = true,
+                        },
+                    },
+                },
+            };
+
+            var response = new
+            {
+                response_action = "update",
+                view = modal,
+            };
+
+            return Ok(response);
         }
     }
 }

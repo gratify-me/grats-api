@@ -34,10 +34,20 @@ namespace Gratify.Grats.Api.Controllers
                 { "Text", slashCommand.Text },
             });
 
+            var draft = new Draft
+            {
+                Sender = slashCommand.UserId,
+                IsSubmitted = false,
+            };
+
+            await _database.Drafts.AddAsync(draft);
+            await _database.SaveChangesAsync();
+
             var modal = new
             {
                 type = "modal",
-                callback_id = "send-grats-modal",
+                // notify_on_close = true, Will optionally inform app that modal was closed.
+                callback_id = $"send-grats-modal|{draft.Id}", // view_id is also sent ad OK-response, so should probably use this instead.
                 title = new
                 {
                     type = "plain_text",
