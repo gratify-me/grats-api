@@ -12,5 +12,7 @@ namespace Gratify.Grats.Api.Services
         Task<string> SendMessage(object message);
 
         Task<string> OpenModal(string triggerId, object modal);
+
+        Task<string> PublishModal(string triggerId, object modal);
     }
 }

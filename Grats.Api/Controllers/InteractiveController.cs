@@ -48,7 +48,30 @@ namespace Gratify.Grats.Api.Controllers
                     { "Payload", payload },
                 });
 
-                if (Submission.SendGrats.Is(submission, out var draftId))
+                if (Submission.AddTeamMember.Is(submission))
+                {
+                    var memberId = submission.View.State.Values.SelectUser.UsersSelect.SelectedUser;
+                    if (memberId == "USLACKBOT")
+                    {
+                        return ShowErrors();
+                    }
+
+                    var member = await _database.Users.FindAsync(memberId);
+                    if (member == null)
+                    {
+                        member = new Database.User { Id = memberId };
+                        await _database.Users.AddAsync(member);
+                    }
+
+                    var userId = submission.User.Id;
+                    member.GratsApprover = submission.User.Id;
+                    await _database.SaveChangesAsync();
+
+                    var teamMembers = _database.Users.Where(user => user.GratsApprover == userId);
+                    var homeBlocks = EventsController.AppHomeBlocks(teamMembers);
+                    var reply = await _slackService.PublishModal(userId, homeBlocks);
+                }
+                else if (Submission.SendGrats.Is(submission, out var draftId))
                 {
                     var draft = await _database.Drafts.FindAsync(draftId);
                     if (!draft.IsSubmitted)
@@ -116,6 +139,71 @@ namespace Gratify.Grats.Api.Controllers
                     text = "That's OK for now (but in the future you might have to do more to deny grats 😉)",
                     response_type = "ephemeral",
                 });
+            }
+            else if (Interaction.AddTeamMember.Is(interaction))
+            {
+                var modal = new
+                {
+                    type = "modal",
+                    callback_id = $"add_team_member_modal",
+                    title = new
+                    {
+                        type = "plain_text",
+                        text = "New member",
+                        emoji = true,
+                    },
+                    submit = new
+                    {
+                        type = "plain_text",
+                        text = "Add member",
+                        emoji = true,
+                    },
+                    close = new
+                    {
+                        type = "plain_text",
+                        text = "Cancel",
+                        emoji = true,
+                    },
+                    blocks = new object[]
+                    {
+                        new
+                        {
+                            type = "input",
+                            block_id = "select_user",
+                            element = new
+                            {
+                                type = "users_select",
+                                action_id = "user_selected",
+                                placeholder = new
+                                {
+                                    type = "plain_text",
+                                    text = "Select a user",
+                                    emoji = true,
+                                },
+                            },
+                            label = new
+                            {
+                                type = "plain_text",
+                                text = ":heavy_plus_sign: Who should we add to your team?",
+                                emoji = true,
+                            },
+                        },
+                    },
+                };
+
+                var response = await _slackService.OpenModal(interaction.TriggerId, modal);
+            }
+            else if (Interaction.RemoveTeamMember.Is(interaction, out string memberId))
+            {
+                var member = await _database.Users.FindAsync(memberId);
+                if (member != null)
+                {
+                    member.GratsApprover = null;
+                    await _database.SaveChangesAsync();
+                    var teamMembers = _database.Users.Where(user => user.GratsApprover == interaction.User.Id);
+                    var homeBlocks = EventsController.AppHomeBlocks(teamMembers);
+                    var reply = await _slackService.PublishModal(interaction.User.Id, homeBlocks);
+                }
             }
             else
             {
@@ -297,7 +385,7 @@ namespace Gratify.Grats.Api.Controllers
                 response_action = "errors",
                 errors = new
                 {
-                    select_user = $"Cannot send grats to Slackbot", // select_user is block_id of element with error.
+                    select_user = $"Slackbot is not a valid user", // select_user is block_id of element with error.
                 },
             };
 

@@ -4,12 +4,16 @@ namespace Gratify.Grats.Api.Dto
     {
         public static Submission SendGrats => new Submission("send-grats-modal");
 
+        public static Submission AddTeamMember => new Submission("add_team_member_modal");
+
         public string Id { get; }
 
         public Submission(string id)
         {
             Id = id;
         }
+
+        public bool Is(GratsViewSubmission submission) => Id == submission.View.CallbackId;
 
         public bool Is(GratsViewSubmission submission, out int draftId)
         {
