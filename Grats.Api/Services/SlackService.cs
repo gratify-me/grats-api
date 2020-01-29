@@ -32,12 +32,12 @@ namespace Gratify.Grats.Api.Services
             }
         }
 
-        public async Task<Channel> GetAppChannel(User user)
+        public async Task<Channel> GetAppChannel(string userId)
         {
             var url = $"{SlackApiUrl}/conversations.open";
             var message = new
             {
-                users = user.Id,
+                users = userId,
             };
 
             var json = JsonConvert.SerializeObject(message);

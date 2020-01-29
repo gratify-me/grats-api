@@ -7,7 +7,7 @@ namespace Gratify.Grats.Api.Services
     {
         Task<string> ReplyToInteraction(string responseUrl, object reply);
 
-        Task<Channel> GetAppChannel(User user);
+        Task<Channel> GetAppChannel(string userId);
 
         Task<string> SendMessage(object message);
 

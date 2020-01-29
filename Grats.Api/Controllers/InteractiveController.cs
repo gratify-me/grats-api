@@ -218,18 +218,21 @@ namespace Gratify.Grats.Api.Controllers
 
         private async Task RequestGratsApproval(GratsViewSubmission submission)
         {
+            var senderId = submission.User.Id;
+            var approver = await _database.Users.FindAsync(senderId);
+            var approverId = approver?.GratsApprover ?? senderId;
             var grats = new Grats.Api.Database.Grats
             {
-                Sender = submission.User.Id,
+                Sender = senderId,
                 Content = submission.View.State.Values.GratsMessage.PlainTextInput.Value,
-                Approver = submission.User.Id,
+                Approver = approverId,
                 Receiver = submission.View.State.Values.SelectUser.UsersSelect.SelectedUser,
             };
 
             await _database.Grats.AddAsync(grats);
             await _database.SaveChangesAsync();
 
-            var channel = await _slackService.GetAppChannel(submission.User);
+            var channel = await _slackService.GetAppChannel(grats.Approver);
             var blocks = new
             {
                 channel = channel.Id,
@@ -302,7 +305,7 @@ namespace Gratify.Grats.Api.Controllers
 
             grats.IsApproved = true;
 
-            var channel = await _slackService.GetAppChannel(new Dto.User { Id = grats.Receiver });
+            var channel = await _slackService.GetAppChannel(grats.Receiver);
             var blocks = new
             {
                 channel = channel.Id,
@@ -373,7 +376,11 @@ namespace Gratify.Grats.Api.Controllers
             await Task.WhenAll(new Task[]
             {
                 _database.SaveChangesAsync(),
-                _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Grats approved ✔" }),
+                _slackService.ReplyToInteraction(interaction.ResponseUrl, new
+                {
+                    text = "Grats approved ✔",
+                    response_type = "ephemeral",
+                }),
                 _slackService.SendMessage(blocks),
             });
         }
