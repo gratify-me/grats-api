@@ -51,7 +51,7 @@ namespace Gratify.Grats.Api.Controllers
                 title = new
                 {
                     type = "plain_text",
-                    text = "Send Grats@Google",
+                    text = "Send Grats to Jonas",
                     emoji = true,
                 },
                 submit = new
