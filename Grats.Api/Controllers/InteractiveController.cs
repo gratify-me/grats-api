@@ -71,6 +71,18 @@ namespace Gratify.Grats.Api.Controllers
                     var homeBlocks = EventsController.AppHomeBlocks(teamMembers);
                     var reply = await _slackService.PublishModal(userId, homeBlocks);
                 }
+                else if (Submission.ForwardGrats.Is(submission, out var gratsId))
+                {
+                    var newApprover = submission.View.State.Values.SelectUser.UsersSelect.SelectedUser;
+                    if (newApprover == "USLACKBOT")
+                    {
+                        return ShowErrors();
+                    }
+                    else
+                    {
+                        await SubmitForwardGrats(submission, gratsId, newApprover);
+                    }
+                }
                 else if (Submission.SendGrats.Is(submission, out var draftId))
                 {
                     var draft = await _database.Drafts.FindAsync(draftId);
@@ -119,6 +131,10 @@ namespace Gratify.Grats.Api.Controllers
             if (Interaction.ApproveGrats.Is(interaction, out gratsId))
             {
                 await ApproveGrats(interaction, gratsId);
+            }
+            else if (Interaction.ForwardGrats.Is(interaction, out gratsId))
+            {
+                await ForwardGrats(interaction, gratsId);
             }
             else if (Interaction.DenyGrats.Is(interaction, out gratsId))
             {
@@ -216,6 +232,84 @@ namespace Gratify.Grats.Api.Controllers
             }
         }
 
+        private async Task SubmitForwardGrats(GratsViewSubmission submission, int gratsId, string newApprover)
+        {
+            var grats = await _database.Grats.FindAsync(gratsId);
+            grats.Approver = newApprover;
+
+            var channel = await _slackService.GetAppChannel(grats.Approver);
+            var blocks = new
+            {
+                channel = channel.Id,
+                text = $"<@{grats.Sender}> wants to send grats to <@{grats.Receiver}>!",
+                blocks = new object[]
+                {
+                    new
+                    {
+                        type = "section",
+                        text = new
+                        {
+                            type = "mrkdwn",
+                            text = $"<@{grats.Sender}> wants to send grats to <@{grats.Receiver}>!",
+                        },
+                    },
+                    new
+                    {
+                        type = "section",
+                        text = new
+                        {
+                            type = "mrkdwn",
+                            text = $"*Reason:*\n_{grats.Content}_",
+                        },
+                    },
+                    new
+                    {
+                        type = "actions",
+                        elements = new object[]
+                        {
+                            new
+                            {
+                                type = "button",
+                                text = new
+                                {
+                                    type = "plain_text",
+                                    emoji = true,
+                                    text = "Approve"
+                                },
+                                style = "primary",
+                                value = $"{Interaction.ApproveGrats.Id}|{grats.Id}",
+                            },
+                            new
+                            {
+                                type = "button",
+                                text = new
+                                {
+                                    type = "plain_text",
+                                    emoji = true,
+                                    text = "Deny"
+                                },
+                                style = "danger",
+                                value = $"{Interaction.DenyGrats.Id}|{grats.Id}",
+                            },
+                            new
+                            {
+                                type = "button",
+                                text = new
+                                {
+                                    type = "plain_text",
+                                    emoji = true,
+                                    text = "Forward"
+                                },
+                                value = $"{Interaction.ForwardGrats.Id}|{grats.Id}",
+                            },
+                        },
+                    },
+                },
+            };
+
+            await _slackService.SendMessage(blocks);
+        }
+
         private async Task RequestGratsApproval(GratsViewSubmission submission)
         {
             var senderId = submission.User.Id;
@@ -286,12 +380,121 @@ namespace Gratify.Grats.Api.Controllers
                                 style = "danger",
                                 value = $"{Interaction.DenyGrats.Id}|{grats.Id}",
                             },
+                            new
+                            {
+                                type = "button",
+                                text = new
+                                {
+                                    type = "plain_text",
+                                    emoji = true,
+                                    text = "Forward"
+                                },
+                                value = $"{Interaction.ForwardGrats.Id}|{grats.Id}",
+                            },
                         },
                     },
                 },
             };
 
             await _slackService.SendMessage(blocks);
+        }
+
+        private async Task ForwardGrats(InteractionPayload interaction, int gratsId)
+        {
+            var modal = new
+            {
+                type = "modal",
+                callback_id = $"forward-grats-modal|{gratsId}",
+                title = new
+                {
+                    type = "plain_text",
+                    text = "Forward Grats",
+                    emoji = true,
+                },
+                submit = new
+                {
+                    type = "plain_text",
+                    text = "Forward Grats",
+                    emoji = true,
+                },
+                close = new
+                {
+                    type = "plain_text",
+                    text = "Cancel",
+                    emoji = true,
+                },
+                blocks = new object[]
+                {
+                    new
+                    {
+                        type = "input",
+                        block_id = "select_user",
+                        element = new
+                        {
+                            type = "users_select",
+                            action_id = "user_selected",
+                            placeholder = new
+                            {
+                                type = "plain_text",
+                                text = "Select a user",
+                                emoji = true,
+                            },
+                        },
+                        label = new
+                        {
+                            type = "plain_text",
+                            text = "Who should approve Grats?",
+                            emoji = true,
+                        },
+                    },
+                    new
+                    {
+                        type = "section",
+                        text = new
+                        {
+                            type = "plain_text",
+                            text = "Transfer approval responsibility permanently"
+                        },
+                        accessory = new
+                        {
+                            type = "radio_buttons",
+                            action_id = "should_transfer_approval_responsibility",
+                            initial_option = new
+                            {
+                                value = "No",
+                                text = new
+                                {
+                                    type = "plain_text",
+                                    text = "No"
+                                }
+                            },
+                            options = new object[]
+                            {
+                                new
+                                {
+                                    value = "Yes",
+                                    text = new
+                                    {
+                                        type = "plain_text",
+                                        text = "Yes"
+                                    }
+                                },
+                                new
+                                {
+                                    value = "No",
+                                    text = new
+                                    {
+                                        type = "plain_text",
+                                        text = "No"
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            };
+
+            var response = await _slackService.OpenModal(interaction.TriggerId, modal);
         }
 
         private async Task ApproveGrats(InteractionPayload interaction, int gratsId)

@@ -6,6 +6,8 @@ namespace Gratify.Grats.Api.Dto
 
         public static Submission AddTeamMember => new Submission("add_team_member_modal");
 
+        public static Submission ForwardGrats => new Submission("forward-grats-modal");
+
         public string Id { get; }
 
         public Submission(string id)

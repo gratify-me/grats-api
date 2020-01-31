@@ -8,6 +8,8 @@ namespace Gratify.Grats.Api.Dto
 
         public static Interaction DenyGrats => new Interaction("deny_grats");
 
+        public static Interaction ForwardGrats => new Interaction("forward_grats");
+
         public static Interaction AddTeamMember => new Interaction("add_new_team_member");
 
         public static Interaction RemoveTeamMember => new Interaction("remove_team_member");
