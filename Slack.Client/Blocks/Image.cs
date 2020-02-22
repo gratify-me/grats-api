@@ -8,7 +8,7 @@ namespace Slack.Client.Blocks
     /// A simple image block, designed to make those cat photos really pop.
     /// Available in surfaces: Modals, Messages, Home tabs
     /// </summary>
-    public class Image
+    public class Image : LayoutBlock
     {
         [JsonPropertyName("type")]
         public string Type => "image";
@@ -33,15 +33,5 @@ namespace Slack.Client.Blocks
         [Required]
         [JsonPropertyName("title")]
         public PlainText Title { get; set; }
-
-        /// <summary>
-        /// A string acting as a unique identifier for a block.
-        /// You can use this block_id when you receive an interaction payload to identify the source of the action.
-        /// If not specified, one will be generated. Maximum length for this field is 255 characters.
-        /// block_id should be unique for each message and each iteration of a message.
-        /// If a message is updated, use a new block_id.
-        /// </summary>
-        [JsonPropertyName("block_id")]
-        public string BlockId { get; set; }
     }
 }

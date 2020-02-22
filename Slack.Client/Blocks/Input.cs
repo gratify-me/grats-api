@@ -8,7 +8,7 @@ namespace Slack.Client.Blocks
     /// It can hold a plain-text input element, a select menu element, a multi-select menu element, or a datepicker.
     /// Available in surfaces: Modals
     /// </summary>
-    public class Input
+    public class Input : LayoutBlock
     {
         [JsonPropertyName("type")]
         public string Type => "input";
@@ -27,16 +27,6 @@ namespace Slack.Client.Blocks
         [Required]
         [JsonPropertyName("element")]
         public object[] Element { get; set; }
-
-        /// <summary>
-        /// A string acting as a unique identifier for a block.
-        /// You can use this block_id when you receive an interaction payload to identify the source of the action.
-        /// If not specified, one will be generated. Maximum length for this field is 255 characters.
-        /// block_id should be unique for each message and each iteration of a message.
-        /// If a message is updated, use a new block_id.
-        /// </summary>
-        [JsonPropertyName("block_id")]
-        public string BlockId { get; set; }
 
         /// <summary>
         /// An optional hint that appears below an input element in a lighter grey.

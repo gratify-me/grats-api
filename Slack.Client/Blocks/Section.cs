@@ -8,7 +8,7 @@ namespace Slack.Client.Blocks
     /// it can be used as a simple text block, in combination with text fields, or side-by-side with any of the available block elements.
     /// Available in surfaces: Modals, Messages, Home tabs
     /// </summary>
-    public class Section
+    public class Section : LayoutBlock
     {
         [JsonPropertyName("type")]
         public string Type => "section";
@@ -21,16 +21,6 @@ namespace Slack.Client.Blocks
         [Required]
         [JsonPropertyName("text")]
         public TextObject Text { get; set; }
-
-        /// <summary>
-        /// A string acting as a unique identifier for a block.
-        /// You can use this block_id when you receive an interaction payload to identify the source of the action.
-        /// If not specified, one will be generated. Maximum length for this field is 255 characters.
-        /// block_id should be unique for each message and each iteration of a message.
-        /// If a message is updated, use a new block_id.
-        /// </summary>
-        [JsonPropertyName("block_id")]
-        public string BlockId { get; set; }
 
         /// <summary>
         /// An array of text objects.
