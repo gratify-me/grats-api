@@ -66,7 +66,7 @@ namespace Gratify.Grats.Api.Controllers
                     Text = "Cancel",
                     Emoji = true,
                 },
-                blocks = new LayoutBlock[]
+                blocks = new object[]
                 {
                     new Input
                     {

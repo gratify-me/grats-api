@@ -1,5 +1,4 @@
-using System.Collections.Generic;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Gratify.Grats.Api.Dto
 {
@@ -7,76 +6,76 @@ namespace Gratify.Grats.Api.Dto
     public class GratsViewSubmission
     {
         // "type":"view_submission"
-        [JsonProperty("type")]
+        [JsonPropertyName("type")]
         public string Type { get; set; }
 
-        [JsonProperty("team")]
+        [JsonPropertyName("team")]
         public Team Team { get; set; }
 
-        [JsonProperty("user")]
+        [JsonPropertyName("user")]
         public User User { get; set; }
 
-        [JsonProperty("api_app_id")]
+        [JsonPropertyName("api_app_id")]
         public string ApiAppId { get; set; }
 
-        [JsonProperty("token")]
+        [JsonPropertyName("token")]
         public string Token { get; set; }
 
-        [JsonProperty("trigger_id")]
+        [JsonPropertyName("trigger_id")]
         public string TriggerId { get; set; }
 
-        [JsonProperty("view")]
+        [JsonPropertyName("view")]
         public View View { get; set; }
     }
 
     public class View
     {
-        [JsonProperty("state")]
+        [JsonPropertyName("state")]
         public State State { get; set; }
 
-        [JsonProperty("callback_id")]
+        [JsonPropertyName("callback_id")]
         public string CallbackId { get; set; }
 
-        [JsonProperty("hash")]
+        [JsonPropertyName("hash")]
         public string Hash { get; set; }
     }
 
     public class State
     {
-        [JsonProperty("values")]
+        [JsonPropertyName("values")]
         public StateValues Values { get; set; }
     }
 
     public class StateValues
     {
-        [JsonProperty("select_user")]
+        [JsonPropertyName("select_user")]
         public SelectUser SelectUser { get; set; }
 
-        [JsonProperty("grats_message")]
+        [JsonPropertyName("grats_message")]
         public GratsMessage GratsMessage { get; set; }
     }
 
     public class SelectUser
     {
-        [JsonProperty("user_selected")]
+        [JsonPropertyName("user_selected")]
         public UsersSelect UsersSelect { get; set; }
     }
 
     public class UsersSelect
     {
-        [JsonProperty("selected_user")]
+        [JsonPropertyName("selected_user")]
         public string SelectedUser { get; set; }
     }
 
     public class GratsMessage
     {
-        [JsonProperty("grats_message_written")]
+        [JsonPropertyName("grats_message_written")]
         public PlainTextInput PlainTextInput { get; set; }
     }
 
     public class PlainTextInput
     {
-        [JsonProperty("value")]
+        [JsonPropertyName("value")]
         public string Value { get; set; }
     }
 }

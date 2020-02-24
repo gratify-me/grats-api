@@ -1,13 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Web;
 using Gratify.Grats.Api.Database;
 using Gratify.Grats.Api.Services;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using Slack.Client.BlockKit.BlockElements;
 using Slack.Client.BlockKit.BlockElements.Selects;
 using Slack.Client.BlockKit.CompositionObjects;
@@ -40,10 +40,10 @@ namespace Gratify.Grats.Api.Controllers
             }
 
             var json = HttpUtility.UrlDecode(payload, Encoding.UTF8);
-            var type = JsonConvert.DeserializeObject<Dto.PayloadType>(json);
+            var type = JsonSerializer.Deserialize<Dto.PayloadType>(json);
             if (type.IsViewSubmission)
             {
-                var submission = JsonConvert.DeserializeObject<Dto.GratsViewSubmission>(json);
+                var submission = JsonSerializer.Deserialize<Dto.GratsViewSubmission>(json);
 
                 _telemetry.TrackEvent("Received Submission", new Dictionary<string, string>()
                 {
@@ -114,7 +114,7 @@ namespace Gratify.Grats.Api.Controllers
                 });
             }
 
-            var interaction = JsonConvert.DeserializeObject<Dto.InteractionPayload>(json);
+            var interaction = JsonSerializer.Deserialize<Dto.InteractionPayload>(json);
 
             _telemetry.TrackEvent("Received Interaction", new Dictionary<string, string>()
             {
@@ -180,7 +180,7 @@ namespace Gratify.Grats.Api.Controllers
                         Text = "Cancel",
                         Emoji = true,
                     },
-                    blocks = new LayoutBlock[]
+                    blocks = new object[]
                     {
                         new Input
                         {
@@ -238,7 +238,7 @@ namespace Gratify.Grats.Api.Controllers
             {
                 channel = channel.Id,
                 text = $"<@{grats.Sender}> wants to send grats to <@{grats.Receiver}>!",
-                blocks = new LayoutBlock[]
+                blocks = new object[]
                 {
                     new Section
                     {
@@ -316,7 +316,7 @@ namespace Gratify.Grats.Api.Controllers
             {
                 channel = channel.Id,
                 text = $"<@{grats.Sender}> wants to send grats to <@{grats.Receiver}>!",
-                blocks = new LayoutBlock[]
+                blocks = new object[]
                 {
                     new Section
                     {
@@ -394,7 +394,7 @@ namespace Gratify.Grats.Api.Controllers
                     Text = "Cancel",
                     Emoji = true,
                 },
-                blocks = new LayoutBlock[]
+                blocks = new object[]
                 {
                     new Input
                     {
@@ -465,7 +465,7 @@ namespace Gratify.Grats.Api.Controllers
             {
                 channel = channel.Id,
                 text = $"Congratulations! <@{grats.Sender}> just sent you grats 🎉",
-                blocks = new LayoutBlock[]
+                blocks = new object[]
                 {
                     new Section
                     {
@@ -566,7 +566,7 @@ namespace Gratify.Grats.Api.Controllers
                     Text = "Cancel",
                     Emoji = true,
                 },
-                blocks = new LayoutBlock[]
+                blocks = new object[]
                 {
                     new Input
                     {
@@ -588,7 +588,7 @@ namespace Gratify.Grats.Api.Controllers
                     },
                     new Context
                     {
-                        Elements = new TextObject[]
+                        Elements = new MrkdwnText[]
                         {
                             new MrkdwnText
                             {

@@ -2,9 +2,9 @@ using System;
 using System.IO;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Gratify.Grats.Api.Dto;
-using Newtonsoft.Json;
 
 namespace Gratify.Grats.Api.Services
 {
@@ -20,16 +20,17 @@ namespace Gratify.Grats.Api.Services
 
         public async Task<string> ReplyToInteraction(string responseUrl, object reply)
         {
-            var json = JsonConvert.SerializeObject(reply);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-            using (var response = await _httpClient.PostAsync(responseUrl, content))
+            var json = JsonSerializer.Serialize<object>(reply, new JsonSerializerOptions
             {
-                var contentStream = await response.Content.ReadAsStreamAsync();
-                using (var streamReader = new StreamReader(contentStream))
-                {
-                    return await streamReader.ReadToEndAsync();
-                }
-            }
+                IgnoreNullValues = true,
+            });
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            using var response = await _httpClient.PostAsync(responseUrl, content);
+            var contentStream = await response.Content.ReadAsStreamAsync();
+
+            using var streamReader = new StreamReader(contentStream);
+            return await streamReader.ReadToEndAsync();
         }
 
         public async Task<Channel> GetAppChannel(string userId)
@@ -40,39 +41,37 @@ namespace Gratify.Grats.Api.Services
                 users = userId,
             };
 
-            var json = JsonConvert.SerializeObject(message);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-            using (var response = await _httpClient.PostAsync(url, content))
+            var json = JsonSerializer.Serialize<object>(message, new JsonSerializerOptions
             {
-                var contentStream = await response.Content.ReadAsStreamAsync();
-                using (var streamReader = new StreamReader(contentStream))
-                using (JsonReader jsonReader = new JsonTextReader(streamReader))
-                {
-                    var serializer = new JsonSerializer();
-                    var openResponse = serializer.Deserialize<ConversationsOpenResponse>(jsonReader);
-                    if (!openResponse.Ok)
-                    {
-                        throw new Exception(openResponse.Error);
-                    }
+                IgnoreNullValues = true,
+            });
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
 
-                    return openResponse.Channel;
-                }
+            using var response = await _httpClient.PostAsync(url, content);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            var openResponse = JsonSerializer.Deserialize<ConversationsOpenResponse>(responseContent);
+            if (!openResponse.Ok)
+            {
+                throw new Exception(openResponse.Error);
             }
+
+            return openResponse.Channel;
         }
 
         public async Task<string> SendMessage(object message)
         {
             var url = $"{SlackApiUrl}/chat.postMessage";
-            var json = JsonConvert.SerializeObject(message);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-            using (var response = await _httpClient.PostAsync(url, content))
+            var json = JsonSerializer.Serialize<object>(message, new JsonSerializerOptions
             {
-                var contentStream = await response.Content.ReadAsStreamAsync();
-                using (var streamReader = new StreamReader(contentStream))
-                {
-                    return await streamReader.ReadToEndAsync();
-                }
-            }
+                IgnoreNullValues = true,
+            });
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            using var response = await _httpClient.PostAsync(url, content);
+            var contentStream = await response.Content.ReadAsStreamAsync();
+
+            using var streamReader = new StreamReader(contentStream);
+            return await streamReader.ReadToEndAsync();
         }
 
         // https://api.slack.com/surfaces/modals/using
@@ -85,16 +84,17 @@ namespace Gratify.Grats.Api.Services
                 view = modal,
             };
 
-            var json = JsonConvert.SerializeObject(payload);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-            using (var response = await _httpClient.PostAsync(url, content))
+            var json = JsonSerializer.Serialize<object>(payload, new JsonSerializerOptions
             {
-                var contentStream = await response.Content.ReadAsStreamAsync();
-                using (var streamReader = new StreamReader(contentStream))
-                {
-                    return await streamReader.ReadToEndAsync();
-                }
-            }
+                IgnoreNullValues = true,
+            });
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            using var response = await _httpClient.PostAsync(url, content);
+            var contentStream = await response.Content.ReadAsStreamAsync();
+
+            using var streamReader = new StreamReader(contentStream);
+            return await streamReader.ReadToEndAsync();
         }
 
         // https://api.slack.com/surfaces/modals/using
@@ -107,16 +107,17 @@ namespace Gratify.Grats.Api.Services
                 view = modal,
             };
 
-            var json = JsonConvert.SerializeObject(payload);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-            using (var response = await _httpClient.PostAsync(url, content))
+            var json = JsonSerializer.Serialize<object>(payload, new JsonSerializerOptions
             {
-                var contentStream = await response.Content.ReadAsStreamAsync();
-                using (var streamReader = new StreamReader(contentStream))
-                {
-                    return await streamReader.ReadToEndAsync();
-                }
-            }
+                IgnoreNullValues = true,
+            });
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            using var response = await _httpClient.PostAsync(url, content);
+            var contentStream = await response.Content.ReadAsStreamAsync();
+
+            using var streamReader = new StreamReader(contentStream);
+            return await streamReader.ReadToEndAsync();
         }
     }
 }

@@ -1,122 +1,122 @@
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Gratify.Grats.Api.Dto
 {
     // https://api.slack.com/reference/interaction-payloads
     public class InteractionPayload
     {
-        [JsonProperty("type")]
+        [JsonPropertyName("type")]
         public string Type { get; set; }
 
-        [JsonProperty("team")]
+        [JsonPropertyName("team")]
         public Team Team { get; set; }
 
-        [JsonProperty("user")]
+        [JsonPropertyName("user")]
         public User User { get; set; }
 
-        [JsonProperty("api_app_id")]
+        [JsonPropertyName("api_app_id")]
         public string ApiAppId { get; set; }
 
-        [JsonProperty("token")]
+        [JsonPropertyName("token")]
         public string Token { get; set; }
 
-        [JsonProperty("container")]
+        [JsonPropertyName("container")]
         public Container Container { get; set; }
 
-        [JsonProperty("trigger_id")]
+        [JsonPropertyName("trigger_id")]
         public string TriggerId { get; set; }
 
-        [JsonProperty("channel")]
+        [JsonPropertyName("channel")]
         public Channel Channel { get; set; }
 
-        [JsonProperty("response_url")]
+        [JsonPropertyName("response_url")]
         public string ResponseUrl { get; set; }
 
-        [JsonProperty("actions")]
+        [JsonPropertyName("actions")]
         public Action[] Actions { get; set; }
     }
 
     public class Team
     {
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public string Id { get; set; }
 
-        [JsonProperty("domain")]
+        [JsonPropertyName("domain")]
         public string Domain { get; set; }
     }
 
     public class User
     {
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public string Id { get; set; }
 
-        [JsonProperty("username")]
+        [JsonPropertyName("username")]
         public string Username { get; set; }
 
-        [JsonProperty("name")]
+        [JsonPropertyName("name")]
         public string Name { get; set; }
 
-        [JsonProperty("team_id")]
+        [JsonPropertyName("team_id")]
         public string TeamId { get; set; }
     }
 
     public class Container
     {
-        [JsonProperty("type")]
+        [JsonPropertyName("type")]
         public string Type { get; set; }
 
-        [JsonProperty("message_ts")]
+        [JsonPropertyName("message_ts")]
         public string MessageTs { get; set; }
 
-        [JsonProperty("channel_id")]
+        [JsonPropertyName("channel_id")]
         public string ChannelId { get; set; }
 
-        [JsonProperty("is_ephemeral")]
+        [JsonPropertyName("is_ephemeral")]
         public bool IsEphemeral { get; set; }
     }
 
     public class Channel
     {
-        [JsonProperty("id")]
+        [JsonPropertyName("id")]
         public string Id { get; set; }
 
-        [JsonProperty("name")]
+        [JsonPropertyName("name")]
         public string Name { get; set; }
     }
 
     public class Action
     {
-        [JsonProperty("action_id")]
+        [JsonPropertyName("action_id")]
         public string ActionId { get; set; }
 
-        [JsonProperty("block_id")]
+        [JsonPropertyName("block_id")]
         public string BlockId { get; set; }
 
-        [JsonProperty("text")]
+        [JsonPropertyName("text")]
         public Text Text { get; set; }
 
-        [JsonProperty("value")]
+        [JsonPropertyName("value")]
         public string Value { get; set; }
 
-        [JsonProperty("style")]
+        [JsonPropertyName("style")]
         public string Style { get; set; }
 
-        [JsonProperty("type")]
+        [JsonPropertyName("type")]
         public string Type { get; set; }
 
-        [JsonProperty("action_ts")]
+        [JsonPropertyName("action_ts")]
         public string ActionTs { get; set; }
     }
 
     public class Text
     {
-        [JsonProperty("type")]
+        [JsonPropertyName("type")]
         public string Type { get; set; }
 
-        [JsonProperty("text")]
+        [JsonPropertyName("text")]
         public string Value { get; set; }
 
-        [JsonProperty("emoji")]
+        [JsonPropertyName("emoji")]
         public bool Emoji { get; set; }
     }
 }

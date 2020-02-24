@@ -52,7 +52,7 @@ namespace Gratify.Grats.Api.Controllers
             var homeBlocks = new
             {
                 type = "home",
-                blocks = new List<LayoutBlock>
+                blocks = new List<object>
                 {
                     new Section
                     {

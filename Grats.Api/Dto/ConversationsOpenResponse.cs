@@ -1,16 +1,16 @@
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace Gratify.Grats.Api.Dto
 {
     public class ConversationsOpenResponse
     {
-        [JsonProperty("ok")]
+        [JsonPropertyName("ok")]
         public bool Ok { get; set; }
 
-        [JsonProperty("error")]
+        [JsonPropertyName("error")]
         public string Error { get; set; }
 
-        [JsonProperty("channel")]
+        [JsonPropertyName("channel")]
         public Channel Channel { get; set; }
     }
 }
