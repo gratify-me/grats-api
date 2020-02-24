@@ -9,7 +9,7 @@ namespace Slack.Client.BlockKit.BlockElements
     /// Supported in the following app surfaces: Modals
     /// Works with block types: Section, Actions, Input
     /// </summary>
-    public abstract class PlainTextInput : BlockElement
+    public class PlainTextInput : BlockElement
     {
         [JsonPropertyName("type")]
         public string Type => "plain_text_input";

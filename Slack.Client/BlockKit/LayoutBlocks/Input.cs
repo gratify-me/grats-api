@@ -27,7 +27,7 @@ namespace Slack.Client.BlockKit.LayoutBlocks
         /// </summary>
         [Required]
         [JsonPropertyName("element")]
-        public object[] Element { get; set; }
+        public object Element { get; set; }
 
         /// <summary>
         /// An optional hint that appears below an input element in a lighter grey.

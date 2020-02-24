@@ -13,7 +13,7 @@ namespace Slack.Client.BlockKit.BlockElements
     /// You can also specify simple URL links as overflow menu options, instead of actions.
     /// Works with block types: Section, Actions
     /// </summary>
-    public abstract class OverflowMenu : BlockElement
+    public class OverflowMenu : BlockElement
     {
         [JsonPropertyName("type")]
         public string Type => "overflow";

@@ -9,7 +9,7 @@ namespace Slack.Client.BlockKit.BlockElements
     /// Supported in the following app surfaces: Home tabs, Modals
     /// Works with block types: Section, Actions, Input
     /// </summary>
-    public abstract class RadioButtonGroup : BlockElement
+    public class RadioButtonGroup : BlockElement
     {
         [JsonPropertyName("type")]
         public string Type => "radio_buttons";
