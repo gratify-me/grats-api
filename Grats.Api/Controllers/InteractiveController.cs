@@ -4,11 +4,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Web;
 using Gratify.Grats.Api.Database;
-using Gratify.Grats.Api.Dto;
 using Gratify.Grats.Api.Services;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
+using Slack.Client.BlockKit.BlockElements;
+using Slack.Client.BlockKit.BlockElements.Selects;
+using Slack.Client.BlockKit.CompositionObjects;
+using Slack.Client.BlockKit.LayoutBlocks;
 
 // https://api.slack.com/interactivity/handling
 namespace Gratify.Grats.Api.Controllers
@@ -37,10 +40,10 @@ namespace Gratify.Grats.Api.Controllers
             }
 
             var json = HttpUtility.UrlDecode(payload, Encoding.UTF8);
-            var type = JsonConvert.DeserializeObject<PayloadType>(json);
+            var type = JsonConvert.DeserializeObject<Dto.PayloadType>(json);
             if (type.IsViewSubmission)
             {
-                var submission = JsonConvert.DeserializeObject<GratsViewSubmission>(json);
+                var submission = JsonConvert.DeserializeObject<Dto.GratsViewSubmission>(json);
 
                 _telemetry.TrackEvent("Received Submission", new Dictionary<string, string>()
                 {
@@ -48,7 +51,7 @@ namespace Gratify.Grats.Api.Controllers
                     { "Payload", payload },
                 });
 
-                if (Submission.AddTeamMember.Is(submission))
+                if (Dto.Submission.AddTeamMember.Is(submission))
                 {
                     var memberId = submission.View.State.Values.SelectUser.UsersSelect.SelectedUser;
                     if (memberId == "USLACKBOT")
@@ -71,7 +74,7 @@ namespace Gratify.Grats.Api.Controllers
                     var homeBlocks = EventsController.AppHomeBlocks(teamMembers);
                     var reply = await _slackService.PublishModal(userId, homeBlocks);
                 }
-                else if (Submission.ForwardGrats.Is(submission, out var gratsId))
+                else if (Dto.Submission.ForwardGrats.Is(submission, out var gratsId))
                 {
                     var newApprover = submission.View.State.Values.SelectUser.UsersSelect.SelectedUser;
                     if (newApprover == "USLACKBOT")
@@ -83,7 +86,7 @@ namespace Gratify.Grats.Api.Controllers
                         await SubmitForwardGrats(submission, gratsId, newApprover);
                     }
                 }
-                else if (Submission.SendGrats.Is(submission, out var draftId))
+                else if (Dto.Submission.SendGrats.Is(submission, out var draftId))
                 {
                     var draft = await _database.Drafts.FindAsync(draftId);
                     if (!draft.IsSubmitted)
@@ -111,7 +114,7 @@ namespace Gratify.Grats.Api.Controllers
                 });
             }
 
-            var interaction = JsonConvert.DeserializeObject<InteractionPayload>(json);
+            var interaction = JsonConvert.DeserializeObject<Dto.InteractionPayload>(json);
 
             _telemetry.TrackEvent("Received Interaction", new Dictionary<string, string>()
             {
@@ -125,18 +128,18 @@ namespace Gratify.Grats.Api.Controllers
             return Ok();
         }
 
-        private async Task HandleInteraction(InteractionPayload interaction)
+        private async Task HandleInteraction(Dto.InteractionPayload interaction)
         {
             int gratsId = -1;
-            if (Interaction.ApproveGrats.Is(interaction, out gratsId))
+            if (Dto.Interaction.ApproveGrats.Is(interaction, out gratsId))
             {
                 await ApproveGrats(interaction, gratsId);
             }
-            else if (Interaction.ForwardGrats.Is(interaction, out gratsId))
+            else if (Dto.Interaction.ForwardGrats.Is(interaction, out gratsId))
             {
                 await ForwardGrats(interaction, gratsId);
             }
-            else if (Interaction.DenyGrats.Is(interaction, out gratsId))
+            else if (Dto.Interaction.DenyGrats.Is(interaction, out gratsId))
             {
                 var grats = await _database.Grats.FindAsync(gratsId);
                 if (grats.IsApproved.HasValue)
@@ -156,52 +159,45 @@ namespace Gratify.Grats.Api.Controllers
                     response_type = "ephemeral",
                 });
             }
-            else if (Interaction.AddTeamMember.Is(interaction))
+            else if (Dto.Interaction.AddTeamMember.Is(interaction))
             {
                 var modal = new
                 {
                     type = "modal",
                     callback_id = $"add_team_member_modal",
-                    title = new
+                    title = new PlainText
                     {
-                        type = "plain_text",
-                        text = "New member",
-                        emoji = true,
+                        Text = "New member",
+                        Emoji = true,
                     },
-                    submit = new
+                    submit = new PlainText
                     {
-                        type = "plain_text",
-                        text = "Add member",
-                        emoji = true,
+                        Text = "Add member",
+                        Emoji = true,
                     },
-                    close = new
+                    close = new PlainText
                     {
-                        type = "plain_text",
-                        text = "Cancel",
-                        emoji = true,
+                        Text = "Cancel",
+                        Emoji = true,
                     },
-                    blocks = new object[]
+                    blocks = new LayoutBlock[]
                     {
-                        new
+                        new Input
                         {
-                            type = "input",
-                            block_id = "select_user",
-                            element = new
+                            BlockId = "select_user",
+                            Element = new UsersSelect
                             {
-                                type = "users_select",
-                                action_id = "user_selected",
-                                placeholder = new
+                                ActionId = "user_selected",
+                                Placeholder = new PlainText
                                 {
-                                    type = "plain_text",
-                                    text = "Select a user",
-                                    emoji = true,
+                                    Text = "Select a user",
+                                    Emoji = true,
                                 },
                             },
-                            label = new
+                            Label = new PlainText
                             {
-                                type = "plain_text",
-                                text = ":heavy_plus_sign: Who should we add to your team?",
-                                emoji = true,
+                                Text = ":heavy_plus_sign: Who should we add to your team?",
+                                Emoji = true,
                             },
                         },
                     },
@@ -209,7 +205,7 @@ namespace Gratify.Grats.Api.Controllers
 
                 var response = await _slackService.OpenModal(interaction.TriggerId, modal);
             }
-            else if (Interaction.RemoveTeamMember.Is(interaction, out string memberId))
+            else if (Dto.Interaction.RemoveTeamMember.Is(interaction, out string memberId))
             {
                 var member = await _database.Users.FindAsync(memberId);
                 if (member != null)
@@ -232,7 +228,7 @@ namespace Gratify.Grats.Api.Controllers
             }
         }
 
-        private async Task SubmitForwardGrats(GratsViewSubmission submission, int gratsId, string newApprover)
+        private async Task SubmitForwardGrats(Dto.GratsViewSubmission submission, int gratsId, string newApprover)
         {
             var grats = await _database.Grats.FindAsync(gratsId);
             grats.Approver = newApprover;
@@ -242,65 +238,54 @@ namespace Gratify.Grats.Api.Controllers
             {
                 channel = channel.Id,
                 text = $"<@{grats.Sender}> wants to send grats to <@{grats.Receiver}>!",
-                blocks = new object[]
+                blocks = new LayoutBlock[]
                 {
-                    new
+                    new Section
                     {
-                        type = "section",
-                        text = new
+                        Text = new MrkdwnText
                         {
-                            type = "mrkdwn",
-                            text = $"<@{grats.Sender}> wants to send grats to <@{grats.Receiver}>!",
+                            Text = $"<@{grats.Sender}> wants to send grats to <@{grats.Receiver}>!",
                         },
                     },
-                    new
+                    new Section
                     {
-                        type = "section",
-                        text = new
+                        Text = new MrkdwnText
                         {
-                            type = "mrkdwn",
-                            text = $"*Reason:*\n_{grats.Content}_",
+                            Text = $"*Reason:*\n_{grats.Content}_",
                         },
                     },
-                    new
+                    new Actions
                     {
-                        type = "actions",
-                        elements = new object[]
+                        Elements = new Button[]
                         {
-                            new
+                            new Button
                             {
-                                type = "button",
-                                text = new
+                                Text = new PlainText
                                 {
-                                    type = "plain_text",
-                                    emoji = true,
-                                    text = "Approve"
+                                    Text = "Approve",
+                                    Emoji = true,
                                 },
-                                style = "primary",
-                                value = $"{Interaction.ApproveGrats.Id}|{grats.Id}",
+                                Style = "primary",
+                                Value = $"{Dto.Interaction.ApproveGrats.Id}|{grats.Id}",
                             },
-                            new
+                            new Button
                             {
-                                type = "button",
-                                text = new
+                                Text = new PlainText
                                 {
-                                    type = "plain_text",
-                                    emoji = true,
-                                    text = "Deny"
+                                    Text = "Deny",
+                                    Emoji = true,
                                 },
-                                style = "danger",
-                                value = $"{Interaction.DenyGrats.Id}|{grats.Id}",
+                                Style = "danger",
+                                Value = $"{Dto.Interaction.DenyGrats.Id}|{grats.Id}",
                             },
-                            new
+                            new Button
                             {
-                                type = "button",
-                                text = new
+                                Text = new PlainText
                                 {
-                                    type = "plain_text",
-                                    emoji = true,
-                                    text = "Forward"
+                                    Text = "Forward",
+                                    Emoji = true,
                                 },
-                                value = $"{Interaction.ForwardGrats.Id}|{grats.Id}",
+                                Value = $"{Dto.Interaction.ForwardGrats.Id}|{grats.Id}",
                             },
                         },
                     },
@@ -310,12 +295,12 @@ namespace Gratify.Grats.Api.Controllers
             await _slackService.SendMessage(blocks);
         }
 
-        private async Task RequestGratsApproval(GratsViewSubmission submission)
+        private async Task RequestGratsApproval(Dto.GratsViewSubmission submission)
         {
             var senderId = submission.User.Id;
             var approver = await _database.Users.FindAsync(senderId);
             var approverId = approver?.GratsApprover ?? senderId;
-            var grats = new Grats.Api.Database.Grats
+            var grats = new Database.Grats
             {
                 Sender = senderId,
                 Content = submission.View.State.Values.GratsMessage.PlainTextInput.Value,
@@ -331,65 +316,54 @@ namespace Gratify.Grats.Api.Controllers
             {
                 channel = channel.Id,
                 text = $"<@{grats.Sender}> wants to send grats to <@{grats.Receiver}>!",
-                blocks = new object[]
+                blocks = new LayoutBlock[]
                 {
-                    new
+                    new Section
                     {
-                        type = "section",
-                        text = new
+                        Text = new MrkdwnText
                         {
-                            type = "mrkdwn",
-                            text = $"<@{grats.Sender}> wants to send grats to <@{grats.Receiver}>!",
+                            Text = $"<@{grats.Sender}> wants to send grats to <@{grats.Receiver}>!",
                         },
                     },
-                    new
+                    new Section
                     {
-                        type = "section",
-                        text = new
+                        Text = new MrkdwnText
                         {
-                            type = "mrkdwn",
-                            text = $"*Reason:*\n_{grats.Content}_",
+                            Text = $"*Reason:*\n_{grats.Content}_",
                         },
                     },
-                    new
+                    new Actions
                     {
-                        type = "actions",
-                        elements = new object[]
+                        Elements = new Button[]
                         {
-                            new
+                            new Button
                             {
-                                type = "button",
-                                text = new
+                                Text = new PlainText
                                 {
-                                    type = "plain_text",
-                                    emoji = true,
-                                    text = "Approve"
+                                    Text = "Approve",
+                                    Emoji = true,
                                 },
-                                style = "primary",
-                                value = $"{Interaction.ApproveGrats.Id}|{grats.Id}",
+                                Style = "primary",
+                                Value = $"{Dto.Interaction.ApproveGrats.Id}|{grats.Id}",
                             },
-                            new
+                            new Button
                             {
-                                type = "button",
-                                text = new
+                                Text = new PlainText
                                 {
-                                    type = "plain_text",
-                                    emoji = true,
-                                    text = "Deny"
+                                    Text = "Deny",
+                                    Emoji = true,
                                 },
-                                style = "danger",
-                                value = $"{Interaction.DenyGrats.Id}|{grats.Id}",
+                                Style = "danger",
+                                Value = $"{Dto.Interaction.DenyGrats.Id}|{grats.Id}",
                             },
-                            new
+                            new Button
                             {
-                                type = "button",
-                                text = new
+                                Text = new PlainText
                                 {
-                                    type = "plain_text",
-                                    emoji = true,
-                                    text = "Forward"
+                                    Text = "Forward",
+                                    Emoji = true,
                                 },
-                                value = $"{Interaction.ForwardGrats.Id}|{grats.Id}",
+                                Value = $"{Dto.Interaction.ForwardGrats.Id}|{grats.Id}",
                             },
                         },
                     },
@@ -399,94 +373,72 @@ namespace Gratify.Grats.Api.Controllers
             await _slackService.SendMessage(blocks);
         }
 
-        private async Task ForwardGrats(InteractionPayload interaction, int gratsId)
+        private async Task ForwardGrats(Dto.InteractionPayload interaction, int gratsId)
         {
             var modal = new
             {
                 type = "modal",
                 callback_id = $"forward-grats-modal|{gratsId}",
-                title = new
+                title = new PlainText
                 {
-                    type = "plain_text",
-                    text = "Forward Grats",
-                    emoji = true,
+                    Text = "Forward Grats",
+                    Emoji = true,
                 },
-                submit = new
+                submit = new PlainText
                 {
-                    type = "plain_text",
-                    text = "Forward Grats",
-                    emoji = true,
+                    Text = "Forward Grats",
+                    Emoji = true,
                 },
-                close = new
+                close = new PlainText
                 {
-                    type = "plain_text",
-                    text = "Cancel",
-                    emoji = true,
+                    Text = "Cancel",
+                    Emoji = true,
                 },
-                blocks = new object[]
+                blocks = new LayoutBlock[]
                 {
-                    new
+                    new Input
                     {
-                        type = "input",
-                        block_id = "select_user",
-                        element = new
+                        BlockId = "select_user",
+                        Element = new UsersSelect
                         {
-                            type = "users_select",
-                            action_id = "user_selected",
-                            placeholder = new
+                            ActionId = "user_selected",
+                            Placeholder = new PlainText
                             {
-                                type = "plain_text",
-                                text = "Select a user",
-                                emoji = true,
+                                Text = "Select a user",
+                                Emoji = true,
                             },
                         },
-                        label = new
+                        Label = new PlainText
                         {
-                            type = "plain_text",
-                            text = "Who should approve Grats?",
-                            emoji = true,
+                            Text = "Who should approve Grats?",
+                            Emoji = true,
                         },
                     },
-                    new
+                    new Section
                     {
-                        type = "section",
-                        text = new
+                        Text = new PlainText
                         {
-                            type = "plain_text",
-                            text = "Transfer approval responsibility permanently"
+                            Text = "Transfer approval responsibility permanently",
                         },
-                        accessory = new
+                        Accessory = new RadioButtonGroup
                         {
-                            type = "radio_buttons",
-                            action_id = "should_transfer_approval_responsibility",
-                            initial_option = new
+                            ActionId = "should_transfer_approval_responsibility",
+                            InitialOption = new Option
                             {
-                                value = "No",
-                                text = new
-                                {
-                                    type = "plain_text",
-                                    text = "No"
-                                }
+                                Value = "No",
+                                Text = new PlainText { Text = "No" }
                             },
-                            options = new object[]
+                            Options = new Option[]
                             {
-                                new
+                                new Option
                                 {
-                                    value = "Yes",
-                                    text = new
-                                    {
-                                        type = "plain_text",
-                                        text = "Yes"
-                                    }
+                                    Value = "Yes",
+                                    Text = new PlainText { Text = "Yes" }
                                 },
-                                new
+                                new Option
                                 {
-                                    value = "No",
-                                    text = new
-                                    {
-                                        type = "plain_text",
-                                        text = "No"
-                                    },
+                                    Value = "No",
+                                    Text = new PlainText { Text = "No" },
                                 },
                             },
                         },
@@ -494,10 +446,10 @@ namespace Gratify.Grats.Api.Controllers
                 },
             };
 
-            var response = await _slackService.OpenModal(interaction.TriggerId, modal);
+            await _slackService.OpenModal(interaction.TriggerId, modal);
         }
 
-        private async Task ApproveGrats(InteractionPayload interaction, int gratsId)
+        private async Task ApproveGrats(Dto.InteractionPayload interaction, int gratsId)
         {
             var grats = await _database.Grats.FindAsync(gratsId);
             if (grats.IsApproved.HasValue)
@@ -513,63 +465,52 @@ namespace Gratify.Grats.Api.Controllers
             {
                 channel = channel.Id,
                 text = $"Congratulations! <@{grats.Sender}> just sent you grats 🎉",
-                blocks = new object[]
+                blocks = new LayoutBlock[]
                 {
-                    new
+                    new Section
                     {
-                        type = "section",
-                        text = new
+                        Text = new MrkdwnText
                         {
-                            type = "mrkdwn",
-                            text = $"Congratulations! <@{grats.Sender}> just sent you grats 🎉",
+                            Text = $"Congratulations! <@{grats.Sender}> just sent you grats 🎉",
                         },
                     },
-                    new
+                    new Section
                     {
-                        type = "section",
-                        text = new
+                        Text = new MrkdwnText
                         {
-                            type = "mrkdwn",
-                            text = $"*Reason:*\n_{grats.Content}_",
+                            Text = $"*Reason:*\n_{grats.Content}_",
                         },
                     },
-                    new
+                    new Section
                     {
-                        type = "section",
-                        text = new
+                        Text = new MrkdwnText
                         {
-                            type = "mrkdwn",
-                            text = "Would you like kr 1500;- to be transferred to your Vipps account using phone number 413 10 992?",
+                            Text = "Would you like kr 1500;- to be transferred to your Vipps account using phone number 413 10 992?",
                         },
                     },
-                    new
+                    new Actions
                     {
-                        type = "actions",
-                        elements = new object[]
+                        Elements = new Button[]
                         {
-                            new
+                            new Button
                             {
-                                type = "button",
-                                text = new
+                                Text = new PlainText
                                 {
-                                    type = "plain_text",
-                                    emoji = true,
-                                    text = "Yes!"
+                                    Text = "Yes!",
+                                    Emoji = true,
                                 },
-                                style = "primary",
-                                value = "todo",
+                                Style = "primary",
+                                Value = "todo",
                             },
-                            new
+                            new Button
                             {
-                                type = "button",
-                                text = new
+                                Text = new PlainText
                                 {
-                                    type = "plain_text",
-                                    emoji = true,
-                                    text = "No. I would like to change my account details."
+                                    Text = "No. I would like to change my account details.",
+                                    Emoji = true,
                                 },
-                                style = "danger",
-                                value = "todo",
+                                Style = "danger",
+                                Value = "todo",
                             },
                         },
                     },
@@ -610,81 +551,68 @@ namespace Gratify.Grats.Api.Controllers
             {
                 type = "modal",
                 callback_id = $"send-grats-modal|{draft.Id}",
-                title = new
+                title = new PlainText
                 {
-                    type = "plain_text",
-                    text = "Send Grats",
-                    emoji = true,
+                    Text = "Send Grats",
+                    Emoji = true,
                 },
-                submit = new
+                submit = new PlainText
                 {
-                    type = "plain_text",
-                    text = "Send Grats",
-                    emoji = true,
+                    Text = "Send Grats",
+                    Emoji = true,
                 },
-                close = new
+                close = new PlainText
                 {
-                    type = "plain_text",
-                    text = "Cancel",
-                    emoji = true,
+                    Text = "Cancel",
+                    Emoji = true,
                 },
-                blocks = new object[]
+                blocks = new LayoutBlock[]
                 {
-                    new
+                    new Input
                     {
-                        type = "input",
-                        block_id = "select_user",
-                        element = new
+                        BlockId = "select_user",
+                        Element = new UsersSelect
                         {
-                            type = "users_select",
-                            action_id = "user_selected",
-                            placeholder = new
+                            ActionId = "user_selected",
+                            Placeholder = new PlainText
                             {
-                                type = "plain_text",
-                                text = "Select a user",
-                                emoji = true,
+                                Text = "Select a user",
+                                Emoji = true,
                             },
                         },
-                        label = new
+                        Label = new PlainText
                         {
-                            type = "plain_text",
-                            text = "Who should receive Grats?",
-                            emoji = true,
+                            Text = "Who should receive Grats?",
+                            Emoji = true,
                         },
                     },
-                    new
+                    new Context
                     {
-                        type = "context",
-                        elements = new object[]
+                        Elements = new TextObject[]
                         {
-                            new
+                            new MrkdwnText
                             {
-                                type = "mrkdwn",
-                                text = $":heavy_multiplication_x: Cannot send grats to <@{draft.Receiver}>",
+                                Text = $":heavy_multiplication_x: Cannot send grats to <@{draft.Receiver}>",
                             },
                         },
                     },
-                    new
+                    new Input
                     {
-                        type = "input",
-                        block_id = "grats_message",
-                        element = new
+                        BlockId = "grats_message",
+                        Element = new PlainTextInput
                         {
-                            type = "plain_text_input",
-                            action_id = "grats_message_written",
-                            multiline = true,
-                            placeholder = new
+                            ActionId = "grats_message_written",
+                            Multiline = true,
+                            Placeholder = new PlainText
                             {
-                                type = "plain_text",
-                                text = "A short and concrete description",
-                                emoji = true,
+                                Text = "A short and concrete description",
+                                Emoji = true,
                             },
                         },
-                        label = new
+                        Label = new PlainText
                         {
-                            type = "plain_text",
-                            text = "Why should they receive Grats?",
-                            emoji = true,
+                            Text = "Why should they receive Grats?",
+                            Emoji = true,
                         },
                     },
                 },

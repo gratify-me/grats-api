@@ -1,10 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using Gratify.Grats.Api.Database;
-using Gratify.Grats.Api.Dto;
 using Gratify.Grats.Api.Services;
 using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
+using Slack.Client.BlockKit.BlockElements;
+using Slack.Client.BlockKit.BlockElements.Selects;
+using Slack.Client.BlockKit.CompositionObjects;
+using Slack.Client.BlockKit.LayoutBlocks;
 
 // https://api.slack.com/interactivity/slash-commands
 namespace Gratify.Grats.Api.Controllers
@@ -25,7 +28,7 @@ namespace Gratify.Grats.Api.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SendGrats([FromForm] SlashCommand slashCommand)
+        public async Task<IActionResult> SendGrats([FromForm] Dto.SlashCommand slashCommand)
         {
             _telemetry.TrackEvent("Received Grats", new Dictionary<string, string>()
             {
@@ -48,69 +51,58 @@ namespace Gratify.Grats.Api.Controllers
                 type = "modal",
                 // notify_on_close = true, Will optionally inform app that modal was closed.
                 callback_id = $"send-grats-modal|{draft.Id}", // view_id is also sent ad OK-response, so should probably use this instead.
-                title = new
+                title = new PlainText
                 {
-                    type = "plain_text",
-                    text = "Send Grats to Jonas",
-                    emoji = true,
+                    Text = "Send Grats to Jonas",
+                    Emoji = true,
                 },
-                submit = new
+                submit = new PlainText
                 {
-                    type = "plain_text",
-                    text = "Send Grats",
-                    emoji = true,
+                    Text = "Send Grats",
+                    Emoji = true,
                 },
-                close = new
+                close = new PlainText
                 {
-                    type = "plain_text",
-                    text = "Cancel",
-                    emoji = true,
+                    Text = "Cancel",
+                    Emoji = true,
                 },
-                blocks = new object[]
+                blocks = new LayoutBlock[]
                 {
-                    new
+                    new Input
                     {
-                        type = "input",
-                        block_id = "select_user",
-                        element = new
+                        BlockId = "select_user",
+                        Element = new UsersSelect
                         {
-                            type = "users_select",
-                            action_id = "user_selected",
-                            placeholder = new
+                            ActionId = "user_selected",
+                            Placeholder = new PlainText
                             {
-                                type = "plain_text",
-                                text = "Select a user",
-                                emoji = true,
+                                Text = "Select a user",
+                                Emoji = true,
                             },
                         },
-                        label = new
+                        Label = new PlainText
                         {
-                            type = "plain_text",
-                            text = "Who should receive Grats?",
-                            emoji = true,
+                            Text = "Who should receive Grats?",
+                            Emoji = true,
                         },
                     },
-                    new
+                    new Input
                     {
-                        type = "input",
-                        block_id = "grats_message",
-                        element = new
+                        BlockId = "grats_message",
+                        Element = new PlainTextInput
                         {
-                            type = "plain_text_input",
-                            action_id = "grats_message_written",
-                            multiline = true,
-                            placeholder = new
+                            ActionId = "grats_message_written",
+                            Multiline = true,
+                            Placeholder = new PlainText
                             {
-                                type = "plain_text",
-                                text = "A short and concrete description",
-                                emoji = true,
+                                Text = "A short and concrete description",
+                                Emoji = true,
                             },
                         },
-                        label = new
+                        Label = new PlainText
                         {
-                            type = "plain_text",
-                            text = "Why should they receive Grats?",
-                            emoji = true,
+                            Text = "Why should they receive Grats?",
+                            Emoji = true,
                         },
                     },
                 },
