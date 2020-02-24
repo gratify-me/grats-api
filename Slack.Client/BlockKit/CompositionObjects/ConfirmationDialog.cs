@@ -22,7 +22,7 @@ namespace Slack.Client.BlockKit.CompositionObjects
         /// </summary>
         [Required]
         [JsonPropertyName("text")]
-        public TextObject Text { get; set; }
+        public object Text { get; set; } // TODO: Should be TextObject but: https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-how-to#serialize-properties-of-derived-classes
 
         /// <summary>
         /// A text object to define the text of the button that confirms the action.
