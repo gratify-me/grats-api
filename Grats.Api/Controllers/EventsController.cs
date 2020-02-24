@@ -94,7 +94,7 @@ namespace Gratify.Grats.Api.Controllers
             return Ok();
         }
 
-        public async Task ShowAppHome(Dto.SlackEvent slackEvent)
+        private async Task ShowAppHome(Dto.SlackEvent slackEvent)
         {
             var userId = slackEvent.Event.User;
             var teamMembers = _database.Users.Where(user => user.GratsApprover == userId);
