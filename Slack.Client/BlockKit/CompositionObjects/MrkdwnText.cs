@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Slack.Client.Blocks
+namespace Slack.Client.BlockKit.CompositionObjects
 {
     /// <summary>
     /// An object containing some text formatted as mrkdwn,

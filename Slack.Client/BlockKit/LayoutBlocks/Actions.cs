@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
-namespace Slack.Client.Blocks
+namespace Slack.Client.BlockKit.LayoutBlocks
 {
     /// <summary>
     /// A block that is used to hold interactive elements.

@@ -1,14 +1,15 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using Slack.Client.BlockKit.CompositionObjects;
 
-namespace Slack.Client.Blocks
+namespace Slack.Client.BlockKit.LayoutBlocks
 {
     /// <summary>
     /// A simple image block, designed to make those cat photos really pop.
     /// Available in surfaces: Modals, Messages, Home tabs
     /// </summary>
-    public class Image : LayoutBlock
+    public class ImageBlock : LayoutBlock
     {
         [JsonPropertyName("type")]
         public string Type => "image";

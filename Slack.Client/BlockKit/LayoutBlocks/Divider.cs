@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Slack.Client.Blocks
+namespace Slack.Client.BlockKit.LayoutBlocks
 {
     /// <summary>
     /// A content divider, like an <hr>, to split up different blocks inside of a message.

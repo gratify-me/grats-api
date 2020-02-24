@@ -1,7 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using Slack.Client.BlockKit.CompositionObjects;
 
-namespace Slack.Client.Blocks
+namespace Slack.Client.BlockKit.LayoutBlocks
 {
     /// <summary>
     /// A section is one of the most flexible blocks available

@@ -1,6 +1,6 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace Slack.Client.Blocks
+namespace Slack.Client.BlockKit.LayoutBlocks
 {
     /// <summary>
     /// Blocks are a series of components that can be combined to create visually rich and compellingly interactive messages. https://api.slack.com/reference/block-kit/blocks
