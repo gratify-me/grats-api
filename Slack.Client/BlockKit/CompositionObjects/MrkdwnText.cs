@@ -8,6 +8,7 @@ namespace Slack.Client.BlockKit.CompositionObjects
     /// </summary>
     public class MrkdwnText : TextObject
     {
+        [JsonPropertyName("type")]
         public string Type => "mrkdwn";
 
         /// <summary>
