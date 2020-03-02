@@ -5,6 +5,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Gratify.Grats.Api.Dto;
+using Slack.Client.Chat;
+using Slack.Client.Views;
 
 namespace Gratify.Grats.Api.Services
 {
@@ -18,7 +20,7 @@ namespace Gratify.Grats.Api.Services
             _httpClient = httpClient;
         }
 
-        public async Task<string> ReplyToInteraction(string responseUrl, object reply)
+        public async Task<string> ReplyToInteraction(string responseUrl, MessagePayload reply)
         {
             var json = JsonSerializer.Serialize<object>(reply, new JsonSerializerOptions
             {
@@ -36,9 +38,9 @@ namespace Gratify.Grats.Api.Services
         public async Task<Channel> GetAppChannel(string userId)
         {
             var url = $"{SlackApiUrl}/conversations.open";
-            var message = new
+            var message = new Slack.Client.Conversations.Open
             {
-                users = userId,
+                Users = userId,
             };
 
             var json = JsonSerializer.Serialize<object>(message, new JsonSerializerOptions
@@ -58,7 +60,7 @@ namespace Gratify.Grats.Api.Services
             return openResponse.Channel;
         }
 
-        public async Task<string> SendMessage(object message)
+        public async Task<string> SendMessage(PostMessage message)
         {
             var url = $"{SlackApiUrl}/chat.postMessage";
             var json = JsonSerializer.Serialize<object>(message, new JsonSerializerOptions
@@ -75,13 +77,13 @@ namespace Gratify.Grats.Api.Services
         }
 
         // https://api.slack.com/surfaces/modals/using
-        public async Task<string> OpenModal(string triggerId, object modal)
+        public async Task<string> OpenModal(string triggerId, ViewPayload view)
         {
             var url = $"{SlackApiUrl}/views.open";
-            var payload = new
+            var payload = new Slack.Client.Views.Open
             {
-                trigger_id = triggerId,
-                view = modal,
+                TriggerId = triggerId,
+                View = view,
             };
 
             var json = JsonSerializer.Serialize<object>(payload, new JsonSerializerOptions
@@ -98,13 +100,13 @@ namespace Gratify.Grats.Api.Services
         }
 
         // https://api.slack.com/surfaces/modals/using
-        public async Task<string> PublishModal(string userId, object modal)
+        public async Task<string> PublishModal(string userId, ViewPayload view)
         {
             var url = $"{SlackApiUrl}/views.publish";
             var payload = new
             {
                 user_id = userId,
-                view = modal,
+                view = view,
             };
 
             var json = JsonSerializer.Serialize<object>(payload, new JsonSerializerOptions

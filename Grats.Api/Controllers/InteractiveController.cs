@@ -12,6 +12,8 @@ using Slack.Client.BlockKit.BlockElements;
 using Slack.Client.BlockKit.BlockElements.Selects;
 using Slack.Client.BlockKit.CompositionObjects;
 using Slack.Client.BlockKit.LayoutBlocks;
+using Slack.Client.Chat;
+using Slack.Client.Views;
 
 // https://api.slack.com/interactivity/handling
 namespace Gratify.Grats.Api.Controllers
@@ -144,43 +146,42 @@ namespace Gratify.Grats.Api.Controllers
                 var grats = await _database.Grats.FindAsync(gratsId);
                 if (grats.IsApproved.HasValue)
                 {
-                    await _slackService.ReplyToInteraction(interaction.ResponseUrl, new
+                    await _slackService.ReplyToInteraction(interaction.ResponseUrl, new ResponseMessage
                     {
-                        text = "Already handled",
-                        response_type = "ephemeral",
+                        Text = "Already handled",
+                        ResponseType = "ephemeral",
                     });
                     return;
                 }
 
                 grats.IsApproved = false;
-                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new
+                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new ResponseMessage
                 {
-                    text = "That's OK for now (but in the future you might have to do more to deny grats 😉)",
-                    response_type = "ephemeral",
+                    Text = "That's OK for now (but in the future you might have to do more to deny grats 😉)",
+                    ResponseType = "ephemeral",
                 });
             }
             else if (Dto.Interaction.AddTeamMember.Is(interaction))
             {
-                var modal = new
+                var modal = new Modal
                 {
-                    type = "modal",
-                    callback_id = $"add_team_member_modal",
-                    title = new PlainText
+                    CallbackId = $"add_team_member_modal",
+                    Title = new PlainText
                     {
                         Text = "New member",
                         Emoji = true,
                     },
-                    submit = new PlainText
+                    Submit = new PlainText
                     {
                         Text = "Add member",
                         Emoji = true,
                     },
-                    close = new PlainText
+                    Close = new PlainText
                     {
                         Text = "Cancel",
                         Emoji = true,
                     },
-                    blocks = new object[]
+                    Blocks = new LayoutBlock[]
                     {
                         new Input
                         {
@@ -220,10 +221,10 @@ namespace Gratify.Grats.Api.Controllers
             else
             {
                 // https://api.slack.com/reference/messaging/payload
-                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new
+                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new ResponseMessage
                 {
-                    text = "Whoops! Looks like something went wrong 💩",
-                    response_type = "ephemeral",
+                    Text = "Whoops! Looks like something went wrong 💩",
+                    ResponseType = "ephemeral",
                 });
             }
         }
@@ -234,11 +235,11 @@ namespace Gratify.Grats.Api.Controllers
             grats.Approver = newApprover;
 
             var channel = await _slackService.GetAppChannel(grats.Approver);
-            var blocks = new
+            var blocks = new PostMessage
             {
-                channel = channel.Id,
-                text = $"<@{grats.Sender}> wants to send grats to <@{grats.Receiver}>!",
-                blocks = new object[]
+                Channel = channel.Id,
+                Text = $"<@{grats.Sender}> wants to send grats to <@{grats.Receiver}>!",
+                Blocks = new LayoutBlock[]
                 {
                     new Section
                     {
@@ -312,11 +313,11 @@ namespace Gratify.Grats.Api.Controllers
             await _database.SaveChangesAsync();
 
             var channel = await _slackService.GetAppChannel(grats.Approver);
-            var blocks = new
+            var blocks = new PostMessage
             {
-                channel = channel.Id,
-                text = $"<@{grats.Sender}> wants to send grats to <@{grats.Receiver}>!",
-                blocks = new object[]
+                Channel = channel.Id,
+                Text = $"<@{grats.Sender}> wants to send grats to <@{grats.Receiver}>!",
+                Blocks = new LayoutBlock[]
                 {
                     new Section
                     {
@@ -375,26 +376,25 @@ namespace Gratify.Grats.Api.Controllers
 
         private async Task ForwardGrats(Dto.InteractionPayload interaction, int gratsId)
         {
-            var modal = new
+            var modal = new Modal
             {
-                type = "modal",
-                callback_id = $"forward-grats-modal|{gratsId}",
-                title = new PlainText
+                CallbackId = $"forward-grats-modal|{gratsId}",
+                Title = new PlainText
                 {
                     Text = "Forward Grats",
                     Emoji = true,
                 },
-                submit = new PlainText
+                Submit = new PlainText
                 {
                     Text = "Forward Grats",
                     Emoji = true,
                 },
-                close = new PlainText
+                Close = new PlainText
                 {
                     Text = "Cancel",
                     Emoji = true,
                 },
-                blocks = new object[]
+                Blocks = new LayoutBlock[]
                 {
                     new Input
                     {
@@ -454,18 +454,18 @@ namespace Gratify.Grats.Api.Controllers
             var grats = await _database.Grats.FindAsync(gratsId);
             if (grats.IsApproved.HasValue)
             {
-                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new { text = "Already handled" });
+                await _slackService.ReplyToInteraction(interaction.ResponseUrl, new MessagePayload { Text = "Already handled" });
                 return;
             }
 
             grats.IsApproved = true;
 
             var channel = await _slackService.GetAppChannel(grats.Receiver);
-            var blocks = new
+            var blocks = new PostMessage
             {
-                channel = channel.Id,
-                text = $"Congratulations! <@{grats.Sender}> just sent you grats 🎉",
-                blocks = new object[]
+                Channel = channel.Id,
+                Text = $"Congratulations! <@{grats.Sender}> just sent you grats 🎉",
+                Blocks = new LayoutBlock[]
                 {
                     new Section
                     {
@@ -520,10 +520,10 @@ namespace Gratify.Grats.Api.Controllers
             await Task.WhenAll(new Task[]
             {
                 _database.SaveChangesAsync(),
-                _slackService.ReplyToInteraction(interaction.ResponseUrl, new
+                _slackService.ReplyToInteraction(interaction.ResponseUrl, new ResponseMessage
                 {
-                    text = "Grats approved ✔",
-                    response_type = "ephemeral",
+                    Text = "Grats approved ✔",
+                    ResponseType = "ephemeral",
                 }),
                 _slackService.SendMessage(blocks),
             });
@@ -531,12 +531,12 @@ namespace Gratify.Grats.Api.Controllers
 
         private IActionResult ShowErrors()
         {
-            var errors = new
+            var errors = new ResponseActionErrors
             {
-                response_action = "errors",
-                errors = new
+                Errors = new Dictionary<string, string>()
                 {
-                    select_user = $"Slackbot is not a valid user", // select_user is block_id of element with error.
+                    // select_user is block_id of element with error.
+                    { "select_user", $"Slackbot is not a valid user" },
                 },
             };
 
@@ -547,26 +547,25 @@ namespace Gratify.Grats.Api.Controllers
         // Can also fill inputs with data from custom providers and more.
         private IActionResult ReplyInvalidGrats(Draft draft)
         {
-            var modal = new
+            var modal = new Modal
             {
-                type = "modal",
-                callback_id = $"send-grats-modal|{draft.Id}",
-                title = new PlainText
+                CallbackId = $"send-grats-modal|{draft.Id}",
+                Title = new PlainText
                 {
                     Text = "Send Grats",
                     Emoji = true,
                 },
-                submit = new PlainText
+                Submit = new PlainText
                 {
                     Text = "Send Grats",
                     Emoji = true,
                 },
-                close = new PlainText
+                Close = new PlainText
                 {
                     Text = "Cancel",
                     Emoji = true,
                 },
-                blocks = new object[]
+                Blocks = new LayoutBlock[]
                 {
                     new Input
                     {
@@ -618,10 +617,9 @@ namespace Gratify.Grats.Api.Controllers
                 },
             };
 
-            var response = new
+            var response = new ResponseActionUpdate
             {
-                response_action = "update",
-                view = modal,
+                View = modal,
             };
 
             return Ok(response);

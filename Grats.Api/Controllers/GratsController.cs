@@ -8,6 +8,7 @@ using Slack.Client.BlockKit.BlockElements;
 using Slack.Client.BlockKit.BlockElements.Selects;
 using Slack.Client.BlockKit.CompositionObjects;
 using Slack.Client.BlockKit.LayoutBlocks;
+using Slack.Client.Views;
 
 // https://api.slack.com/interactivity/slash-commands
 namespace Gratify.Grats.Api.Controllers
@@ -46,27 +47,25 @@ namespace Gratify.Grats.Api.Controllers
             await _database.Drafts.AddAsync(draft);
             await _database.SaveChangesAsync();
 
-            var modal = new
+            var modal = new Modal
             {
-                type = "modal",
-                // notify_on_close = true, Will optionally inform app that modal was closed.
-                callback_id = $"send-grats-modal|{draft.Id}", // view_id is also sent ad OK-response, so should probably use this instead.
-                title = new PlainText
+                CallbackId = $"send-grats-modal|{draft.Id}", // view_id is also sent ad OK-response, so should probably use this instead.
+                Title = new PlainText
                 {
                     Text = "Send Grats to Jonas",
                     Emoji = true,
                 },
-                submit = new PlainText
+                Submit = new PlainText
                 {
                     Text = "Send Grats",
                     Emoji = true,
                 },
-                close = new PlainText
+                Close = new PlainText
                 {
                     Text = "Cancel",
                     Emoji = true,
                 },
-                blocks = new object[]
+                Blocks = new LayoutBlock[]
                 {
                     new Input
                     {

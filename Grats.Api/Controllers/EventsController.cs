@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Slack.Client.BlockKit.BlockElements;
 using Slack.Client.BlockKit.CompositionObjects;
 using Slack.Client.BlockKit.LayoutBlocks;
+using Slack.Client.Views;
 
 // https://api.slack.com/events-api
 namespace Gratify.Grats.Api.Controllers
@@ -27,7 +28,7 @@ namespace Gratify.Grats.Api.Controllers
             _telemetry = telemetry;
         }
 
-        public static object AppHomeBlocks(IEnumerable<Database.User> users)
+        public static HomeTab AppHomeBlocks(IEnumerable<Database.User> users)
         {
             var teamMembers = users
                 .Select(user => new Section
@@ -49,33 +50,32 @@ namespace Gratify.Grats.Api.Controllers
                 })
                 .ToList();
 
-            var homeBlocks = new
+            var homeBlocks = new List<LayoutBlock>
             {
-                type = "home",
-                blocks = new List<object>
+                new Section
                 {
-                    new Section
+                    Text = new MrkdwnText
                     {
-                        Text = new MrkdwnText
-                        {
-                            Text = ":rocket: *Your team*",
-                        },
-                        Accessory = new Button
-                        {
-                            Text = new PlainText
-                            {
-                                Text = ":heavy_plus_sign: New member",
-                                Emoji = true,
-                            },
-                            Value = "add_new_team_member",
-                        }
+                        Text = ":rocket: *Your team*",
                     },
-                    new Divider(),
-                }
+                    Accessory = new Button
+                    {
+                        Text = new PlainText
+                        {
+                            Text = ":heavy_plus_sign: New member",
+                            Emoji = true,
+                        },
+                        Value = "add_new_team_member",
+                    }
+                },
+                new Divider(),
             };
 
-            homeBlocks.blocks.AddRange(teamMembers);
-            return homeBlocks;
+            homeBlocks.AddRange(teamMembers);
+            return new HomeTab
+            {
+                Blocks = homeBlocks.ToArray(),
+            };
         }
 
         [HttpPost]

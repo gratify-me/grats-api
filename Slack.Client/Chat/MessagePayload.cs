@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using Slack.Client.BlockKit.LayoutBlocks;
 
 namespace Slack.Client.Chat
 {
@@ -21,16 +22,22 @@ namespace Slack.Client.Chat
         [JsonPropertyName("text")]
         public string Text { get; set; }
 
-        /// <summary>An array of layout blocks in the same format as described in the building blocks guide: https://api.slack.com/block-kit/building</summary>
+        /// <summary>
+        /// An array of layout blocks in the same format as described in the building blocks guide: https://api.slack.com/block-kit/building
+        /// </summary>
         [JsonPropertyName("blocks")]
-        public string[] Blocks { get; set; }
+        public LayoutBlock[] Blocks { get; set; }
 
-        /// <summary>The ID of another un-threaded message to reply to: https://api.slack.com/messaging/managing#threading</summary>
+        /// <summary>
+        /// The ID of another un-threaded message to reply to: https://api.slack.com/messaging/managing#threading
+        /// </summary>
         /// <example>1234567890.123456</example>
         [JsonPropertyName("thread_ts")]
         public string ThreadTs { get; set; }
 
-        /// <summary>Determines whether the text field is rendered according to mrkdwn formatting or not. Defaults to true.</summary>
+        /// <summary>
+        /// Determines whether the text field is rendered according to mrkdwn formatting or not. Defaults to true.
+        /// </summary>
         [JsonPropertyName("mrkdwn")]
         public bool? Mrkdwn { get; set; }
     }

@@ -21,7 +21,7 @@ namespace Slack.Client.BlockKit.LayoutBlocks
         /// </summary>
         [Required]
         [JsonPropertyName("text")]
-        public object Text { get; set; } // TODO: Should be TextObject but: https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-how-to#serialize-properties-of-derived-classes
+        public TextObject Text { get; set; }
 
         /// <summary>
         /// An array of text objects.
@@ -29,7 +29,7 @@ namespace Slack.Client.BlockKit.LayoutBlocks
         /// Maximum number of items is 10. Maximum length for the text in each item is 2000 characters.
         /// </summary>
         [JsonPropertyName("fields")]
-        public object[] Fields { get; set; } // TODO: Should be TextObject but: https://docs.microsoft.com/en-us/dotnet/standard/serialization/system-text-json-how-to#serialize-properties-of-derived-classes
+        public TextObject[] Fields { get; set; }
 
         /// <summary>
         /// One of the available element objects:

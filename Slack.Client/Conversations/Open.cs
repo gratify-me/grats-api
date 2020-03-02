@@ -2,15 +2,21 @@
 
 namespace Slack.Client.Conversations
 {
-    /// <summary>Arguments used by conversations.open https://api.slack.com/methods/conversations.open</summary>
+    /// <summary>
+    /// Arguments used by conversations.open https://api.slack.com/methods/conversations.open
+    /// </summary>
     public class Open
     {
-        /// <summary>Resume a conversation by supplying an im or mpim's ID. Or provide the users field instead.</summary>
+        /// <summary>
+        /// Resume a conversation by supplying an im or mpim's ID. Or provide the users field instead.
+        /// </summary>
         /// <example>G1234567890</example>
         [JsonPropertyName("channel")]
         public string Channel { get; set; }
 
-        /// <summary>Boolean, indicates you want the full IM channel definition in the response.</summary>
+        /// <summary>
+        /// Boolean, indicates you want the full IM channel definition in the response.
+        /// </summary>
         /// <example>true</example>
         [JsonPropertyName("return_im")]
         public bool? ReturnIm { get; set; }
