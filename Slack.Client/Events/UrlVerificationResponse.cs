@@ -8,6 +8,14 @@ namespace Slack.Client.Events
     /// </summary>
     public class UrlVerificationResponse
     {
+        public UrlVerificationResponse()
+        { }
+
+        public UrlVerificationResponse(UrlVerificationRequest request)
+        {
+            Challenge = request.Challenge;
+        }
+
         /// <summary>
         /// A randomly generated string produced by Slack. This should be the value supplied by the UrlVerificationRequest
         /// </summary>

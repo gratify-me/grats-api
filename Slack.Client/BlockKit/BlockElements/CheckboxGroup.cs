@@ -11,8 +11,12 @@ namespace Slack.Client.BlockKit.BlockElements
     /// </summary>
     public class CheckboxGroup : BlockElement
     {
-        [JsonPropertyName("type")]
-        public string Type => "checkboxes";
+        public const string TypeName = "checkboxes";
+
+        public CheckboxGroup()
+        {
+            Type = TypeName;
+        }
 
         /// <summary>
         /// An array of option objects.

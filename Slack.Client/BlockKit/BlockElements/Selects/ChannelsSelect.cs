@@ -8,8 +8,12 @@ namespace Slack.Client.BlockKit.BlockElements.Selects
     /// </summary>
     public class ChannelsSelect : Select
     {
-        [JsonPropertyName("type")]
-        public string Type => "channels_select";
+        public const string TypeName = "channels_select";
+
+        public ChannelsSelect()
+        {
+            Type = TypeName;
+        }
 
         /// <summary>
         /// The ID of any valid public channel to be pre-selected when the menu loads.

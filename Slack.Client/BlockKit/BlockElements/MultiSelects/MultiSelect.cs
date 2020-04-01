@@ -9,7 +9,7 @@ namespace Slack.Client.BlockKit.BlockElements.MultiSelects
     /// Just like regular select menus, multi-select menus also include type-ahead functionality,
     /// where a user can type a part or all of an option string to filter the list.
     /// </summary>
-    public abstract class MultiSelect : BlockElement
+    public class MultiSelect : BlockElement
     {
         /// <summary>
         /// A text object that defines the placeholder text shown on the menu.

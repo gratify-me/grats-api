@@ -8,8 +8,12 @@ namespace Slack.Client.BlockKit.LayoutBlocks
     /// </summary>
     public class Actions : LayoutBlock
     {
-        [JsonPropertyName("type")]
-        public string Type => "actions";
+        public Actions()
+        {
+            Type = TypeName;
+        }
+
+        public const string TypeName = "actions";
 
         /// <summary>
         /// An array of interactive element objects - buttons, select menus, overflow menus, or date pickers.

@@ -9,8 +9,12 @@ namespace Slack.Client.BlockKit.BlockElements.Selects
     /// </summary>
     public class StaticSelect : Select
     {
-        [JsonPropertyName("type")]
-        public string Type => "static_select";
+        public const string TypeName = "static_select";
+
+        public StaticSelect()
+        {
+            Type = TypeName;
+        }
 
         /// <summary>
         /// An array of option objects. Maximum number of options is 100. If option_groups is specified, this field should not be.

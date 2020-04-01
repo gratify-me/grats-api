@@ -12,8 +12,12 @@ namespace Slack.Client.BlockKit.BlockElements
     /// </summary>
     public class Button : BlockElement
     {
-        [JsonPropertyName("type")]
-        public string Type => "button";
+        public const string TypeName = "button";
+
+        public Button()
+        {
+            Type = TypeName;
+        }
 
         /// <summary>
         /// A text object that defines the button's text. Maximum length for the text in this field is 75 characters.

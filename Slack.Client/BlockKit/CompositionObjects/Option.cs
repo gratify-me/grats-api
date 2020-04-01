@@ -9,6 +9,19 @@ namespace Slack.Client.BlockKit.CompositionObjects
     /// </summary>
     public class Option : CompositionObject
     {
+        public static Option Yes => new Option("Yes");
+
+        public static Option No => new Option("No");
+
+        public Option()
+        { }
+
+        public Option(string value)
+        {
+            Value = value;
+            Text = new PlainText(value, false);
+        }
+
         /// <summary>
         /// A text object that defines the text shown in the option on the menu.
         /// Maximum length for the text in this field is 75 characters.

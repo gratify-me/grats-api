@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Slack.Client.Primitives;
 
 namespace Gratify.Grats.Api.Database
 {
@@ -11,7 +12,7 @@ namespace Gratify.Grats.Api.Database
         [Required]
         [MinLength(1)]
         [MaxLength(100)]
-        public string Sender { get; set; }
+        public User Sender { get; set; }
 
         [MinLength(1)]
         [MaxLength(500)]
@@ -22,6 +23,6 @@ namespace Gratify.Grats.Api.Database
 
         [MinLength(1)]
         [MaxLength(100)]
-        public string Receiver { get; set; }
+        public User Receiver { get; set; }
     }
 }

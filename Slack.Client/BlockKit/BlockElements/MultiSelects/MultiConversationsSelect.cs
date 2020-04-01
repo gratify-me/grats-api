@@ -9,8 +9,12 @@ namespace Slack.Client.BlockKit.BlockElements.MultiSelects
     /// </summary>
     public class MultiConversationsSelect : MultiSelect
     {
-        [JsonPropertyName("type")]
-        public string Type => "multi_conversations_select";
+        public const string TypeName = "multi_conversations_select";
+
+        public MultiConversationsSelect()
+        {
+            Type = TypeName;
+        }
 
         /// <summary>
         /// An array of one or more IDs of any valid conversations to be pre-selected when the menu loads.

@@ -1,16 +1,10 @@
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using Gratify.Grats.Api.Database;
+using Gratify.Grats.Api.Modals;
 using Gratify.Grats.Api.Services;
-using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
-using Slack.Client.BlockKit.BlockElements;
-using Slack.Client.BlockKit.CompositionObjects;
-using Slack.Client.BlockKit.LayoutBlocks;
-using Slack.Client.Views;
+using Slack.Client.Events;
 
-// https://api.slack.com/events-api
 namespace Gratify.Grats.Api.Controllers
 {
     [ApiController]
@@ -18,88 +12,38 @@ namespace Gratify.Grats.Api.Controllers
     public class EventsController : ControllerBase
     {
         private readonly ISlackService _slackService;
+        private readonly InteractionService _interactions;
         private readonly GratsDb _database;
-        private readonly TelemetryClient _telemetry;
 
-        public EventsController(ISlackService slackService, GratsDb database, TelemetryClient telemetry)
+        public EventsController(ISlackService slackService, InteractionService interactions, GratsDb database)
         {
             _slackService = slackService;
+            _interactions = interactions;
             _database = database;
-            _telemetry = telemetry;
-        }
-
-        public static HomeTab AppHomeBlocks(IEnumerable<Database.User> users)
-        {
-            var teamMembers = users
-                .Select(user => new Section
-                {
-                    Text = new MrkdwnText
-                    {
-                        Text = $"*<@{user.Id}>*"
-                    },
-                    Accessory = new Button
-                    {
-                        Style = "danger",
-                        Text = new PlainText
-                        {
-                            Text = "Remove",
-                            Emoji = true,
-                        },
-                        Value = $"remove_team_member|{user.Id}",
-                    }
-                })
-                .ToList();
-
-            var homeBlocks = new List<LayoutBlock>
-            {
-                new Section
-                {
-                    Text = new MrkdwnText
-                    {
-                        Text = ":rocket: *Your team*",
-                    },
-                    Accessory = new Button
-                    {
-                        Text = new PlainText
-                        {
-                            Text = ":heavy_plus_sign: New member",
-                            Emoji = true,
-                        },
-                        Value = "add_new_team_member",
-                    }
-                },
-                new Divider(),
-            };
-
-            homeBlocks.AddRange(teamMembers);
-            return new HomeTab
-            {
-                Blocks = homeBlocks.ToArray(),
-            };
         }
 
         [HttpPost]
-        public async Task<IActionResult> ReceiveEvent([FromBody] Dto.SlackEvent slackEvent)
+        public async Task<IActionResult> ReceiveEvent([FromBody] EventWrapper slackEvent) =>
+            slackEvent switch
+            {
+                UrlVerificationRequest request => Ok(new UrlVerificationResponse(request)),
+                EventCallback request => request.Event switch
+                {
+                    AppHomeOpened appHomeOpened => await ShowAppHome(appHomeOpened),
+                    _ => Ok()
+                },
+                _ => Ok()
+            };
+
+        private async Task<IActionResult> ShowAppHome(AppHomeOpened appHomeOpened)
         {
-            if (slackEvent.IsUrlVerification)
-            {
-                return Ok(new
-                { challenge = slackEvent.Challenge });
-            }
-            else if (slackEvent.Event.IsAppHomeOpened)
-            {
-                await ShowAppHome(slackEvent);
-            }
+            var appHome = new ShowAppHome(_database, _interactions);
+            var homeBlocks = await appHome.Draw(appHomeOpened);
+            var userId = appHomeOpened.User;
+
+            await _slackService.PublishModal(userId, homeBlocks);
 
             return Ok();
-        }
-
-        private async Task ShowAppHome(Dto.SlackEvent slackEvent)
-        {
-            var userId = slackEvent.Event.User;
-            var teamMembers = _database.Users.Where(user => user.GratsApprover == userId);
-            var homeBlocks = AppHomeBlocks(teamMembers);
-            await _slackService.PublishModal(slackEvent.Event.User, homeBlocks);
         }
     }
 }

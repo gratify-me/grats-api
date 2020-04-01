@@ -6,8 +6,15 @@ namespace Slack.Client.BlockKit.BlockElements
     /// <summary>
     /// Block elements can be used inside of section, context, and actions layout blocks. Inputs can only be used inside of input blocks. https://api.slack.com/reference/block-kit/block-elements
     /// </summary>
-    public abstract class BlockElement
+    public class BlockElement
     {
+        /// <summary>
+        /// A string that indicates which kind of block element this is.
+        /// </summary>
+        [Required]
+        [JsonPropertyName("type")]
+        public string Type { get; set; }
+
         /// <summary>
         /// An identifier for this action.
         /// You can use this when you receive an interaction payload to identify the source of the action.

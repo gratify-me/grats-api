@@ -8,8 +8,12 @@ namespace Slack.Client.BlockKit.BlockElements.MultiSelects
     /// </summary>
     public class MultiChannelsSelect : MultiSelect
     {
-        [JsonPropertyName("type")]
-        public string Type => "multi_conversations_select";
+        public const string TypeName = "multi_channels_select";
+
+        public MultiChannelsSelect()
+        {
+            Type = TypeName;
+        }
 
         /// <summary>
         /// An array of one or more IDs of any valid public channel to be pre-selected when the menu loads.

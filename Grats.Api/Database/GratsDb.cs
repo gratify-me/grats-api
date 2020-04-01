@@ -10,6 +10,6 @@ namespace Gratify.Grats.Api.Database
 
         public DbSet<Grats> Grats { get; set; }
 
-        public DbSet<User> Users { get; set; }
+        public DbSet<DbUser> Users { get; set; }
     }
 }

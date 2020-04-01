@@ -9,8 +9,12 @@ namespace Slack.Client.BlockKit.LayoutBlocks
     /// </summary>
     public class File : LayoutBlock
     {
-        [JsonPropertyName("type")]
-        public string Type => "file";
+        public File()
+        {
+            Type = TypeName;
+        }
+
+        public const string TypeName = "file";
 
         /// <summary>
         /// The external unique ID for this file.

@@ -9,8 +9,12 @@ namespace Slack.Client.BlockKit.BlockElements
     /// </summary>
     public class DatePicker : BlockElement
     {
-        [JsonPropertyName("type")]
-        public string Type => "datepicker";
+        public const string TypeName = "datepicker";
+
+        public DatePicker()
+        {
+            Type = TypeName;
+        }
 
         /// <summary>
         /// A text object that defines the placeholder text shown on the datepicker.

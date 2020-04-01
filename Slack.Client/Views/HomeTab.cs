@@ -9,7 +9,11 @@ namespace Slack.Client.Views
     /// </summary>
     public class HomeTab : ViewPayload
     {
-        [JsonPropertyName("type")]
-        public string Type => "home";
+        public const string TypeName = "home";
+
+        public HomeTab()
+        {
+            Type = TypeName;
+        }
     }
 }

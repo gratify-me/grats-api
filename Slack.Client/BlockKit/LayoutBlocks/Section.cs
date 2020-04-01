@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using Slack.Client.BlockKit.BlockElements;
 using Slack.Client.BlockKit.CompositionObjects;
 
 namespace Slack.Client.BlockKit.LayoutBlocks
@@ -11,8 +12,20 @@ namespace Slack.Client.BlockKit.LayoutBlocks
     /// </summary>
     public class Section : LayoutBlock
     {
-        [JsonPropertyName("type")]
-        public string Type => "section";
+        public Section()
+        {
+            Type = TypeName;
+        }
+
+        public Section(string id, string text, BlockElement accessory)
+        {
+            Type = TypeName;
+            BlockId = id;
+            Text = new PlainText(text);
+            Accessory = accessory;
+        }
+
+        public const string TypeName = "section";
 
         /// <summary>
         /// The text for the block, in the form of a text object.
@@ -36,6 +49,6 @@ namespace Slack.Client.BlockKit.LayoutBlocks
         /// Button, Checkboxes, Date Picker, Image, Multi-select Menu, Overflow Menu, Plain-text input, Radio button group or Select Menus.
         /// </summary>
         [JsonPropertyName("accessory")]
-        public object Accessory { get; set; }
+        public BlockElement Accessory { get; set; }
     }
 }

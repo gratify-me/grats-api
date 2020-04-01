@@ -9,7 +9,11 @@ namespace Slack.Client.BlockKit.LayoutBlocks
     /// </summary>
     public class Divider : LayoutBlock
     {
-        [JsonPropertyName("type")]
-        public string Type => "divider";
+        public Divider()
+        {
+            Type = TypeName;
+        }
+
+        public const string TypeName = "divider";
     }
 }

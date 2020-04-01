@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Text.Json;
 using Gratify.Grats.Api.Database;
 using Gratify.Grats.Api.Services;
 using Microsoft.AspNetCore.Builder;
@@ -6,8 +7,11 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Slack.Client.BlockKit.BlockElements.Converters;
+using Slack.Client.BlockKit.CompositionObjects.Converters;
+using Slack.Client.BlockKit.LayoutBlocks.Converters;
+using Slack.Client.Events.Converters;
 
 namespace Gratify.Grats.Api
 {
@@ -41,7 +45,15 @@ namespace Gratify.Grats.Api
                 }
             });
             services.AddSwaggerGen(c => c.SwaggerDoc(_apiInfo.Version, _apiInfo));
-            services.AddControllers();
+            services
+                .AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.IgnoreNullValues = true;
+                    options.JsonSerializerOptions.Converters.Add(new EventWrapperConverter());
+                });
+
+            services.AddTransient<InteractionService>();
 
             var connectionString = Configuration.GetConnectionString("GratsDb");
             if (connectionString.Contains('<'))

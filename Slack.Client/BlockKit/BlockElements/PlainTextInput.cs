@@ -11,8 +11,20 @@ namespace Slack.Client.BlockKit.BlockElements
     /// </summary>
     public class PlainTextInput : BlockElement
     {
-        [JsonPropertyName("type")]
-        public string Type => "plain_text_input";
+        public const string TypeName = "plain_text_input";
+
+        public PlainTextInput()
+        {
+            Type = TypeName;
+        }
+
+        public PlainTextInput(string id, string placeholder, bool multiline = true)
+        {
+            Type = TypeName;
+            ActionId = id;
+            Multiline = multiline;
+            Placeholder = new PlainText(placeholder);
+        }
 
         /// <summary>
         /// A text object that defines the placeholder text shown in the plain-text input.
@@ -44,5 +56,11 @@ namespace Slack.Client.BlockKit.BlockElements
         /// </summary>
         [JsonPropertyName("max_length")]
         public int? MaxLength { get; set; }
+
+        /// <summary>
+        /// The text entered by the user, as returned from Slack.
+        /// </summary>
+        [JsonPropertyName("value")]
+        public string Value { get; set; }
     }
 }

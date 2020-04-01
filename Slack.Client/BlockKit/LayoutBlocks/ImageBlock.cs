@@ -11,8 +11,12 @@ namespace Slack.Client.BlockKit.LayoutBlocks
     /// </summary>
     public class ImageBlock : LayoutBlock
     {
-        [JsonPropertyName("type")]
-        public string Type => "image";
+        public ImageBlock()
+        {
+            Type = TypeName;
+        }
+
+        public const string TypeName = "image";
 
         /// <summary>
         /// The URL of the image to be displayed. Maximum length for this field is 3000 characters.

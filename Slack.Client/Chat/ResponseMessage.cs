@@ -9,6 +9,19 @@ namespace Slack.Client.Chat
     /// </summary>
     public class ResponseMessage : MessagePayload
     {
+        public ResponseMessage()
+        { }
+
+        public ResponseMessage(string text, bool ephemeral = true)
+        {
+            Text = text;
+
+            if (ephemeral)
+            {
+                ResponseType = "ephemeral";
+            }
+        }
+
         /// <summary>
         /// If you want to publish an ephemeral message, include an attribute response_type with your message JSON, and set its value to 'ephemeral'
         /// </summary>

@@ -15,8 +15,12 @@ namespace Slack.Client.BlockKit.BlockElements
     /// </summary>
     public class OverflowMenu : BlockElement
     {
-        [JsonPropertyName("type")]
-        public string Type => "overflow";
+        public const string TypeName = "overflow";
+
+        public OverflowMenu()
+        {
+            Type = TypeName;
+        }
 
         /// <summary>
         /// An array of option objects to display in the menu. Maximum number of options is 5, minimum is 2.

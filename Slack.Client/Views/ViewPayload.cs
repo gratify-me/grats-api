@@ -9,8 +9,15 @@ namespace Slack.Client.Views
     /// To define these views, apps create view payloads — packages of information that describe layout, interactivity, and other useful metadata.
     /// https://api.slack.com/reference/surfaces/views
     /// </summary>
-    public abstract class ViewPayload
+    public class ViewPayload
     {
+        /// <summary>
+        /// A string that indicates which kind of view payload this is.
+        /// </summary>
+        [Required]
+        [JsonPropertyName("type")]
+        public string Type { get; set; }
+
         /// <summary>
         /// An array of blocks that defines the content of the view. Max of 100 blocks.
         /// </summary>
@@ -37,6 +44,6 @@ namespace Slack.Client.Views
         /// A custom identifier that must be unique for all views on a per-team basis.
         /// </summary>
         [JsonPropertyName("external_id")]
-        public bool ExternalId { get; set; }
+        public string ExternalId { get; set; }
     }
 }

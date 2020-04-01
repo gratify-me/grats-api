@@ -1,8 +1,9 @@
 using System.Text.Json.Serialization;
+using Slack.Client.Primitives;
 
-namespace Gratify.Grats.Api.Dto
+namespace Slack.Client.Conversations
 {
-    public class ConversationsOpenResponse
+    public class OpenResponse
     {
         [JsonPropertyName("ok")]
         public bool Ok { get; set; }

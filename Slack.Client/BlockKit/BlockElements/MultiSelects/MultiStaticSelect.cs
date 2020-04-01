@@ -9,8 +9,12 @@ namespace Slack.Client.BlockKit.BlockElements.MultiSelects
     /// </summary>
     public class MultiStaticSelect : MultiSelect
     {
-        [JsonPropertyName("type")]
-        public string Type => "multi_static_select";
+        public const string TypeName = "multi_static_select";
+
+        public MultiStaticSelect()
+        {
+            Type = TypeName;
+        }
 
         /// <summary>
         /// An array of option objects. Maximum number of options is 100. If option_groups is specified, this field should not be.

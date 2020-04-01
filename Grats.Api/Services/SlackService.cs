@@ -4,9 +4,12 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Gratify.Grats.Api.Dto;
 using Slack.Client.Chat;
+using Slack.Client.Chat.Converters;
+using Slack.Client.Conversations;
+using Slack.Client.Primitives;
 using Slack.Client.Views;
+using Slack.Client.Views.Converters;
 
 namespace Gratify.Grats.Api.Services
 {
@@ -14,18 +17,23 @@ namespace Gratify.Grats.Api.Services
     {
         private const string SlackApiUrl = "https://slack.com/api";
         private readonly HttpClient _httpClient;
+        private readonly JsonSerializerOptions _options;
 
         public SlackService(HttpClient httpClient)
         {
             _httpClient = httpClient;
+            _options = new JsonSerializerOptions
+            {
+                IgnoreNullValues = true
+            };
+
+            _options.Converters.Add(new ViewPayloadConverter());
+            _options.Converters.Add(new MessagePayloadConverter());
         }
 
         public async Task<string> ReplyToInteraction(string responseUrl, MessagePayload reply)
         {
-            var json = JsonSerializer.Serialize<object>(reply, new JsonSerializerOptions
-            {
-                IgnoreNullValues = true,
-            });
+            var json = JsonSerializer.Serialize(reply, _options);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             using var response = await _httpClient.PostAsync(responseUrl, content);
@@ -43,15 +51,12 @@ namespace Gratify.Grats.Api.Services
                 Users = userId,
             };
 
-            var json = JsonSerializer.Serialize<object>(message, new JsonSerializerOptions
-            {
-                IgnoreNullValues = true,
-            });
+            var json = JsonSerializer.Serialize(message, _options);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             using var response = await _httpClient.PostAsync(url, content);
             var responseContent = await response.Content.ReadAsStringAsync();
-            var openResponse = JsonSerializer.Deserialize<ConversationsOpenResponse>(responseContent);
+            var openResponse = JsonSerializer.Deserialize<OpenResponse>(responseContent);
             if (!openResponse.Ok)
             {
                 throw new Exception(openResponse.Error);
@@ -63,10 +68,7 @@ namespace Gratify.Grats.Api.Services
         public async Task<string> SendMessage(PostMessage message)
         {
             var url = $"{SlackApiUrl}/chat.postMessage";
-            var json = JsonSerializer.Serialize<object>(message, new JsonSerializerOptions
-            {
-                IgnoreNullValues = true,
-            });
+            var json = JsonSerializer.Serialize(message, _options);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             using var response = await _httpClient.PostAsync(url, content);
@@ -86,10 +88,7 @@ namespace Gratify.Grats.Api.Services
                 View = view,
             };
 
-            var json = JsonSerializer.Serialize<object>(payload, new JsonSerializerOptions
-            {
-                IgnoreNullValues = true,
-            });
+            var json = JsonSerializer.Serialize(payload, _options);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             using var response = await _httpClient.PostAsync(url, content);
@@ -103,16 +102,13 @@ namespace Gratify.Grats.Api.Services
         public async Task<string> PublishModal(string userId, ViewPayload view)
         {
             var url = $"{SlackApiUrl}/views.publish";
-            var payload = new
+            var payload = new Publish
             {
-                user_id = userId,
-                view = view,
+                UserId = userId,
+                View = view,
             };
 
-            var json = JsonSerializer.Serialize<object>(payload, new JsonSerializerOptions
-            {
-                IgnoreNullValues = true,
-            });
+            var json = JsonSerializer.Serialize(payload, _options);
             var content = new StringContent(json, Encoding.UTF8, "application/json");
 
             using var response = await _httpClient.PostAsync(url, content);

@@ -22,7 +22,6 @@ namespace Slack.Client.Events
         /// When the event was dispatched.
         /// </summary>
         /// <example>1525215129.000001</example>
-        [Required]
         [JsonPropertyName("event_ts")]
         public string EventTs { get; set; }
     }

@@ -12,6 +12,22 @@ namespace Slack.Client.Views
     /// </summary>
     public class ResponseActionErrors : ResponseAction
     {
+        public ResponseActionErrors()
+        { }
+
+        public ResponseActionErrors(string blockId, string errorMessage)
+        {
+            Errors = new Dictionary<string, string>()
+            {
+                { blockId, errorMessage },
+            };
+        }
+
+        public ResponseActionErrors(Dictionary<string, string> errors)
+        {
+            Errors = errors;
+        }
+
         [JsonPropertyName("response_action")]
         public string ResponseActionType => "errors";
 

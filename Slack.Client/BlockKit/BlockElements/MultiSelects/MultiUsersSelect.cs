@@ -8,8 +8,12 @@ namespace Slack.Client.BlockKit.BlockElements.MultiSelects
     /// </summary>
     public class MultiUsersSelect : MultiSelect
     {
-        [JsonPropertyName("type")]
-        public string Type => "multi_users_select";
+        public const string TypeName = "multi_users_select";
+
+        public MultiUsersSelect()
+        {
+            Type = TypeName;
+        }
 
         /// <summary>
         /// An array of user IDs of any valid users to be pre-selected when the menu loads.

@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Gratify.Grats.Api.Database
 {
-    public class User
+    public class DbUser
     {
         [Key]
         [Required]

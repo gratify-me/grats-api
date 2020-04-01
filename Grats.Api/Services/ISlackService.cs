@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
-using Gratify.Grats.Api.Dto;
 using Slack.Client.Chat;
+using Slack.Client.Primitives;
 using Slack.Client.Views;
 
 namespace Gratify.Grats.Api.Services

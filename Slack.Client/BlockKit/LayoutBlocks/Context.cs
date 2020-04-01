@@ -9,8 +9,12 @@ namespace Slack.Client.BlockKit.LayoutBlocks
     /// </summary>
     public class Context : LayoutBlock
     {
-        [JsonPropertyName("type")]
-        public string Type => "context";
+        public Context()
+        {
+            Type = TypeName;
+        }
+
+        public const string TypeName = "context";
 
         /// <summary>
         /// An array of image elements and text objects. Maximum number of items is 10.

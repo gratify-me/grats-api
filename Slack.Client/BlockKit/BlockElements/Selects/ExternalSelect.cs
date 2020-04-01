@@ -9,8 +9,12 @@ namespace Slack.Client.BlockKit.BlockElements.Selects
     /// </summary>
     public class ExternalSelect : Select
     {
-        [JsonPropertyName("type")]
-        public string Type => "external_select";
+        public const string TypeName = "external_select";
+
+        public ExternalSelect()
+        {
+            Type = TypeName;
+        }
 
         /// <summary>
         /// A single option that exactly matches one of the options within the options or option_groups loaded from the external data source.

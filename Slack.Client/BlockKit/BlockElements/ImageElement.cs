@@ -11,8 +11,12 @@ namespace Slack.Client.BlockKit.BlockElements
     /// </summary>
     public class ImageElement : BlockElement
     {
-        [JsonPropertyName("type")]
-        public string Type => "image";
+        public const string TypeName = "image";
+
+        public ImageElement()
+        {
+            Type = TypeName;
+        }
 
         /// <summary>
         /// The URL of the image to be displayed.

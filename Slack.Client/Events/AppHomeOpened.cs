@@ -4,7 +4,6 @@ using Slack.Client.Views;
 namespace Slack.Client.Events
 {
     /// <summary>
-    /// Type: app_home_opened
     /// This app event notifies your app when a user has entered the App Home.
     /// Your Slack app must have a bot user configured and installed to use this event.
     /// If the user opens a tab within the App Home, the event payload for this event will reference that in the tab field.
@@ -18,6 +17,13 @@ namespace Slack.Client.Events
     /// </summary>
     public class AppHomeOpened : Event
     {
+        public const string TypeName = "app_home_opened";
+
+        public AppHomeOpened()
+        {
+            Type = TypeName;
+        }
+
         /// <summary>
         /// The user ID belonging to the user that incited this action.
         /// </summary>

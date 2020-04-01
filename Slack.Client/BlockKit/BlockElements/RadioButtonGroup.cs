@@ -11,8 +11,20 @@ namespace Slack.Client.BlockKit.BlockElements
     /// </summary>
     public class RadioButtonGroup : BlockElement
     {
-        [JsonPropertyName("type")]
-        public string Type => "radio_buttons";
+        public const string TypeName = "radio_buttons";
+
+        public RadioButtonGroup()
+        {
+            Type = TypeName;
+        }
+
+        public RadioButtonGroup(string id, Option[] options)
+        {
+            Type = TypeName;
+            ActionId = id;
+            InitialOption = options[0];
+            Options = options;
+        }
 
         /// <summary>
         /// An array of option objects.

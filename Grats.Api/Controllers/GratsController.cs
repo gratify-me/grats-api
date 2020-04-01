@@ -1,16 +1,9 @@
-﻿using System.Collections.Generic;
-using System.Threading.Tasks;
-using Gratify.Grats.Api.Database;
+﻿using System.Threading.Tasks;
+using Gratify.Grats.Api.Dto;
+using Gratify.Grats.Api.Modals;
 using Gratify.Grats.Api.Services;
-using Microsoft.ApplicationInsights;
 using Microsoft.AspNetCore.Mvc;
-using Slack.Client.BlockKit.BlockElements;
-using Slack.Client.BlockKit.BlockElements.Selects;
-using Slack.Client.BlockKit.CompositionObjects;
-using Slack.Client.BlockKit.LayoutBlocks;
-using Slack.Client.Views;
 
-// https://api.slack.com/interactivity/slash-commands
 namespace Gratify.Grats.Api.Controllers
 {
     [ApiController]
@@ -18,101 +11,21 @@ namespace Gratify.Grats.Api.Controllers
     public class GratsController : ControllerBase
     {
         private readonly ISlackService _slackService;
-        private readonly GratsDb _database;
-        private readonly TelemetryClient _telemetry;
+        private readonly InteractionService _interactions;
 
-        public GratsController(ISlackService slackService, GratsDb database, TelemetryClient telemetry)
+        public GratsController(ISlackService slackService, InteractionService interactions)
         {
             _slackService = slackService;
-            _database = database;
-            _telemetry = telemetry;
+            _interactions = interactions;
         }
 
         [HttpPost]
-        public async Task<IActionResult> SendGrats([FromForm] Dto.SlashCommand slashCommand)
+        public async Task<IActionResult> SendGrats([FromForm] SlashCommand slashCommand)
         {
-            _telemetry.TrackEvent("Received Grats", new Dictionary<string, string>()
-            {
-                { "UserName", slashCommand.UserName },
-                { "Command", slashCommand.Command },
-                { "Text", slashCommand.Text },
-            });
+            var sendGrats = new SendGrats(_interactions);
+            var modal = sendGrats.Draw(slashCommand);
 
-            var draft = new Draft
-            {
-                Sender = slashCommand.UserId,
-                IsSubmitted = false,
-            };
-
-            await _database.Drafts.AddAsync(draft);
-            await _database.SaveChangesAsync();
-
-            var modal = new Modal
-            {
-                CallbackId = $"send-grats-modal|{draft.Id}", // view_id is also sent ad OK-response, so should probably use this instead.
-                Title = new PlainText
-                {
-                    Text = "Send Grats to Jonas",
-                    Emoji = true,
-                },
-                Submit = new PlainText
-                {
-                    Text = "Send Grats",
-                    Emoji = true,
-                },
-                Close = new PlainText
-                {
-                    Text = "Cancel",
-                    Emoji = true,
-                },
-                Blocks = new LayoutBlock[]
-                {
-                    new Input
-                    {
-                        BlockId = "select_user",
-                        Element = new UsersSelect
-                        {
-                            ActionId = "user_selected",
-                            Placeholder = new PlainText
-                            {
-                                Text = "Select a user",
-                                Emoji = true,
-                            },
-                        },
-                        Label = new PlainText
-                        {
-                            Text = "Who should receive Grats?",
-                            Emoji = true,
-                        },
-                    },
-                    new Input
-                    {
-                        BlockId = "grats_message",
-                        Element = new PlainTextInput
-                        {
-                            ActionId = "grats_message_written",
-                            Multiline = true,
-                            Placeholder = new PlainText
-                            {
-                                Text = "A short and concrete description",
-                                Emoji = true,
-                            },
-                        },
-                        Label = new PlainText
-                        {
-                            Text = "Why should they receive Grats?",
-                            Emoji = true,
-                        },
-                    },
-                },
-            };
-
-            var response = await _slackService.OpenModal(slashCommand.TriggerId, modal);
-            _telemetry.TrackEvent("Open Modal Response", new Dictionary<string, string>()
-            {
-                { "TriggerId", slashCommand.TriggerId },
-                { "Response", response },
-            });
+            await _slackService.OpenModal(slashCommand.TriggerId, modal);
 
             return Ok();
         }

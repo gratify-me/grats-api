@@ -8,7 +8,7 @@ namespace Slack.Client.BlockKit.BlockElements.Selects
     /// A select menu, just as with a standard HTML <select> tag, creates a drop down menu with a list of options for a user to choose.
     /// The select menu also includes type-ahead functionality, where a user can type a part or all of an option string to filter the list.
     /// </summary>
-    public abstract class Select : BlockElement
+    public class Select : BlockElement
     {
         /// <summary>
         /// A text object that defines the placeholder text shown on the menu.

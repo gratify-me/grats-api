@@ -9,8 +9,12 @@ namespace Slack.Client.BlockKit.BlockElements.MultiSelects
     /// </summary>
     public class MultiExternalSelect : MultiSelect
     {
-        [JsonPropertyName("type")]
-        public string Type => "multi_external_select";
+        public const string TypeName = "multi_external_select";
+
+        public MultiExternalSelect()
+        {
+            Type = TypeName;
+        }
 
         /// <summary>
         /// When the typeahead field is used, a request will be sent on every character change.

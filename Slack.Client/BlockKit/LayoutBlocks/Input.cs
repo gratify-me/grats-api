@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using Slack.Client.BlockKit.BlockElements;
 using Slack.Client.BlockKit.CompositionObjects;
 
 namespace Slack.Client.BlockKit.LayoutBlocks
@@ -11,8 +12,20 @@ namespace Slack.Client.BlockKit.LayoutBlocks
     /// </summary>
     public class Input : LayoutBlock
     {
-        [JsonPropertyName("type")]
-        public string Type => "input";
+        public Input()
+        {
+            Type = TypeName;
+        }
+
+        public Input(string id, string label, BlockElement element)
+        {
+            Type = TypeName;
+            BlockId = id;
+            Label = new PlainText(label);
+            Element = element;
+        }
+
+        public const string TypeName = "input";
 
         /// <summary>
         /// A label that appears above an input element in the form of a text object.
@@ -27,7 +40,7 @@ namespace Slack.Client.BlockKit.LayoutBlocks
         /// </summary>
         [Required]
         [JsonPropertyName("element")]
-        public object Element { get; set; }
+        public BlockElement Element { get; set; }
 
         /// <summary>
         /// An optional hint that appears below an input element in a lighter grey.

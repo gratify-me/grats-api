@@ -8,8 +8,12 @@ namespace Slack.Client.BlockKit.CompositionObjects
     /// </summary>
     public class MrkdwnText : TextObject
     {
-        [JsonPropertyName("type")]
-        public string Type => "mrkdwn";
+        public const string TypeName = "mrkdwn";
+
+        public MrkdwnText()
+        {
+            Type = TypeName;
+        }
 
         /// <summary>
         /// When set to false (as is default) URLs will be auto-converted into links,
