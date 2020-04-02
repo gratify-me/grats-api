@@ -9,7 +9,7 @@ namespace Slack.Client.Interactions
     /// The resulting payload can have different structures depending on the source.All those structures will have a type field that indicates the source of the interaction.
     /// https://api.slack.com/reference/interaction-payloads
     /// </summary>
-    public abstract class InteractionPayload
+    public class InteractionPayload
     {
         /// <summary>
         /// Helps identify the source of the payload.

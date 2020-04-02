@@ -37,7 +37,7 @@ namespace Gratify.Api
             // https://docs.microsoft.com/en-us/azure/azure-monitor/app/asp-net-core
             services.AddApplicationInsightsTelemetry();
             // https://docs.microsoft.com/en-us/dotnet/architecture/microservices/implement-resilient-applications/use-httpclientfactory-to-implement-resilient-http-requests
-            services.AddHttpClient<ISlackService, SlackService>(client =>
+            services.AddHttpClient<SlackService>(client =>
             {
                 if (Configuration["SlackApiBotUserToken"] != null)
                 {

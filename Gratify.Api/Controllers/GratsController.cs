@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
+using Gratify.Api.Database.Entities;
 using Gratify.Api.Dto;
 using Gratify.Api.Modals;
 using Gratify.Api.Services;
@@ -10,21 +12,28 @@ namespace Gratify.Api.Controllers
     [Route("[controller]")]
     public class GratsController : ControllerBase
     {
-        private readonly ISlackService _slackService;
         private readonly InteractionService _interactions;
+        private readonly SlackService _slackService;
 
-        public GratsController(ISlackService slackService, InteractionService interactions)
+        public GratsController(InteractionService interactions, SlackService slackService)
         {
-            _slackService = slackService;
             _interactions = interactions;
+            _slackService = slackService;
         }
 
         [HttpPost]
         public async Task<IActionResult> SendGrats([FromForm] SlashCommand slashCommand)
         {
-            var sendGrats = new SendGrats(_interactions);
-            var modal = sendGrats.Draw(slashCommand);
+            var draft = new Draft(
+                correlationId: Guid.NewGuid(),
+                teamId: slashCommand.TeamId,
+                createdAt: DateTime.UtcNow,
+                author: slashCommand.UserId);
 
+            await _interactions.SaveDraft(draft);
+
+            var sendGrats = new SendGrats(_interactions);
+            var modal = sendGrats.Modal(draft);
             await _slackService.OpenModal(slashCommand.TriggerId, modal);
 
             return Ok();

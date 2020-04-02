@@ -5,8 +5,14 @@ namespace Gratify.Api.Database.Entities
 {
     public class Approval : Entity
     {
+        public Approval(Guid correlationId, DateTime approvedAt)
+        {
+            CorrelationId = correlationId;
+            ApprovedAt = approvedAt;
+        }
+
         [Required]
-        public DateTime ApprovedAt { get; set; }
+        public DateTime ApprovedAt { get; private set; }
 
         [Required]
         public int ReviewId { get; set; }

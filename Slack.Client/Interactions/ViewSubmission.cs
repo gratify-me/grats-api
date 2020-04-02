@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -46,7 +47,6 @@ namespace Slack.Client.Interactions
             return GetStateValue<T>(innerValues, rest);
         }
 
-        // TODO: Use PrivateMetadata to pass GratsId (and probably some more data. Hash 4 security?)
-        public string GratsId => View.PrivateMetadata;
+        public Guid CorrelationId => Guid.Parse(View.PrivateMetadata);
     }
 }

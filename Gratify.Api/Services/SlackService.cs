@@ -13,7 +13,7 @@ using Slack.Client.Views.Converters;
 
 namespace Gratify.Api.Services
 {
-    public class SlackService : ISlackService
+    public class SlackService
     {
         private const string SlackApiUrl = "https://slack.com/api";
         private readonly HttpClient _httpClient;

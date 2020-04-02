@@ -1,6 +1,6 @@
+using System;
 using System.Threading.Tasks;
 using Gratify.Api.Database.Entities;
-using Gratify.Api.Dto;
 using Gratify.Api.Services;
 using Slack.Client.BlockKit.BlockElements;
 using Slack.Client.BlockKit.BlockElements.Selects;
@@ -19,50 +19,79 @@ namespace Gratify.Api.Modals
             _interactions = interactions;
         }
 
-        public Modal Draw(SlashCommand comand) =>
+        public Modal Modal(Draft draft) =>
             new Modal(
                 id: typeof(SendGrats),
-                title: $"Send grats {comand.UserName}!",
+                correlationId: draft.CorrelationId,
+                title: $"Send Grats!",
                 submit: "Send Grats",
                 close: "Cancel",
                 blocks: new LayoutBlock[]
                 {
                     new Input(
-                        id: "SelectReceiver",
+                        id: "InputRecipient",
                         label: "Who should receive Grats?",
                         element: new UsersSelect(
-                            id: "GratsReceiver",
+                            id: "Recipient",
                             placeholder: "Select a user")),
 
                     new Input(
-                        id: "WriteGrats",
-                        label: "Why should they receive Grats?",
+                        id: "InputChallenge",
+                        label: "Challenge",
                         element: new PlainTextInput(
-                            id: "GratsMessage",
-                            placeholder: "A short and concrete description")),
+                            id: "Challenge",
+                            placeholder: "Describe a situation or a task that your coworker needed to accomplish and where there were some difficulties to overcome.")),
+
+                    new Input(
+                        id: "InputAction",
+                        label: "Action",
+                        element: new PlainTextInput(
+                            id: "Action",
+                            placeholder: "Describe the actions your coworker took.")),
+
+                    new Input(
+                        id: "InputResult",
+                        label: "Result",
+                        element: new PlainTextInput(
+                            id: "Result",
+                            placeholder: "What happened? How did the event or situation end? What did you accomplish or learn?")),
                 });
 
         public async Task<ResponseAction> OnSubmit(ViewSubmission submission)
         {
-            var receiver = submission.GetStateValue<UsersSelect>("SelectReceiver.GratsReceiver");
-            if (receiver.SelectedUser == Slack.Client.Primitives.User.Slackbot)
+            var recipient = submission.GetStateValue<UsersSelect>("InputRecipient.Recipient");
+            if (recipient.SelectedUser == Slack.Client.Primitives.User.Slackbot)
             {
-                return new ResponseActionErrors("SelectReceiver", "Slackbot is not a valid user");
+                return new ResponseActionErrors("InputRecipient", "Slackbot is not a valid recipient");
             }
 
-            var message = submission.GetStateValue<PlainTextInput>("WriteGrats.GratsMessage");
-            if (message.Value.Length > 500)
+            var challenge = submission.GetStateValue<PlainTextInput>("InputChallenge.Challenge");
+            if (challenge.Value.Length > 300)
             {
-                return new ResponseActionErrors("WriteGrats", "Grats cannot be longer than 500 letters");
+                return new ResponseActionErrors("InputChallenge", "Challenge cannot be longer than 300 letters");
             }
 
-            // await _interactions.RequestGratsApproval(new Draft
-            // {
-            //     Sender = submission.User,
-            //     Receiver = receiver.SelectedUser,
-            //     Content = message.Value,
-            // });
-            await Task.CompletedTask;
+            var action = submission.GetStateValue<PlainTextInput>("InputAction.Action");
+            if (action.Value.Length > 300)
+            {
+                return new ResponseActionErrors("InputAction", "Action cannot be longer than 300 letters");
+            }
+
+            var result = submission.GetStateValue<PlainTextInput>("InputResult.Result");
+            if (result.Value.Length > 300)
+            {
+                return new ResponseActionErrors("InputResult", "Result cannot be longer than 300 letters");
+            }
+
+            var grats = new Grats(
+                correlationId: submission.CorrelationId,
+                createdAt: DateTime.UtcNow,
+                recipient: recipient.SelectedUserId,
+                challenge: challenge.Value,
+                action: action.Value,
+                result: result.Value);
+
+            await _interactions.SubmitGratsForReview(grats);
 
             return new ResponseActionClose();
         }

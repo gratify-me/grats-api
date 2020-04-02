@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 
 namespace Slack.Client.Interactions
@@ -34,5 +35,7 @@ namespace Slack.Client.Interactions
         /// </summary>
         [JsonPropertyName("value")]
         public string Value { get; set; }
+
+        public Guid CorrelationId => Guid.Parse(Value);
     }
 }

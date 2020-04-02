@@ -17,11 +17,11 @@ namespace Slack.Client.BlockKit.LayoutBlocks
             Type = TypeName;
         }
 
-        public Section(string id, string text, BlockElement accessory)
+        public Section(string id, string text, BlockElement accessory = null)
         {
             Type = TypeName;
             BlockId = id;
-            Text = new PlainText(text);
+            Text = new MrkdwnText(text);
             Accessory = accessory;
         }
 

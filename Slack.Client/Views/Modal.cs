@@ -20,9 +20,10 @@ namespace Slack.Client.Views
             Type = TypeName;
         }
 
-        public Modal(Type id, string title, string submit, string close, LayoutBlock[] blocks)
+        public Modal(Type id, Guid correlationId, string title, string submit, string close, LayoutBlock[] blocks)
         {
             Type = TypeName;
+            PrivateMetadata = correlationId.ToString();
             CallbackId = id.ToString();
             Title = new PlainText(title);
             Submit = new PlainText(submit);

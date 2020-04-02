@@ -3,13 +3,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Gratify.Api.Database;
 using Gratify.Api.Database.Entities;
-using Gratify.Api.GratsActions;
 using Gratify.Api.Services;
 using Microsoft.EntityFrameworkCore;
 using Slack.Client.BlockKit.BlockElements;
-using Slack.Client.BlockKit.CompositionObjects;
 using Slack.Client.BlockKit.LayoutBlocks;
-using Slack.Client.Events;
 using Slack.Client.Interactions;
 using Slack.Client.Views;
 
@@ -17,18 +14,19 @@ namespace Gratify.Api.Modals
 {
     public class ShowAppHome
     {
-        private readonly GratsDb _database;
+        private readonly string _addTeamMember = $"{typeof(ShowAppHome)}.AddTeamMember";
+        private readonly string _removeTeamMember = $"{typeof(ShowAppHome)}.RemoveTeamMember";
         private readonly InteractionService _interactions;
+        private readonly GratsDb _database;
 
-        public ShowAppHome(GratsDb database, InteractionService interactions)
+        public ShowAppHome(InteractionService interactions, GratsDb database)
         {
-            _database = database;
             _interactions = interactions;
+            _database = database;
         }
 
-        public async Task<HomeTab> Draw(AppHomeOpened clientEvent)
+        public async Task<HomeTab> HomeTab(string userId)
         {
-            var userId = clientEvent.User;
             var teamMemberUsers = await _database.Users
                 .Where(user => user.DefaultReviewer == userId)
                 .ToArrayAsync();
@@ -39,22 +37,14 @@ namespace Gratify.Api.Modals
 
             var homeBlocks = new List<LayoutBlock>
             {
-                new Section
-                {
-                    Text = new MrkdwnText
-                    {
-                        Text = ":rocket: *Your team*",
-                    },
-                    Accessory = new Button
-                    {
-                        Text = new PlainText
-                        {
-                            Text = ":heavy_plus_sign: New member",
-                            Emoji = true,
-                        },
-                        Value = RemoveTeamMember.Name,
-                    }
-                },
+                new Section(
+                    id: "YourTeam",
+                    text: ":rocket: *Your team*",
+                    accessory: new Button(
+                        id: _addTeamMember,
+                        value: userId,
+                        text: ":heavy_plus_sign: New member")),
+
                 new Divider(),
             };
 
@@ -64,31 +54,27 @@ namespace Gratify.Api.Modals
             };
         }
 
-        public async Task<ResponseAction> OnSubmit(ViewSubmission submission)
+        public async Task OnSubmit(Action action, string triggerId, string userId)
         {
-            // TODO: Man har egentlig ikke en submit på Home Tab. Er dette kanskje feil abstraksjon?
-            // Er det heller verdt å bygge noe spesielt for Home Tab?
-            await Task.CompletedTask;
-            return null;
+            if (action.ActionId == _addTeamMember)
+            {
+                await _interactions.OpenAddTeamMember(triggerId);
+            }
+            else if (action.ActionId == _removeTeamMember)
+            {
+                var memberUserId = int.Parse(action.Value);
+                await _interactions.RemoveTeamMember(userId, memberUserId);
+            }
         }
 
         private Section TeamMemberSection(User user) =>
-            new Section
-            {
-                Text = new MrkdwnText
-                {
-                    Text = $"*<@{user.Id}>*"
-                },
-                Accessory = new Button
-                {
-                    Style = "danger",
-                    Text = new PlainText
-                    {
-                        Text = "Remove",
-                        Emoji = true,
-                    },
-                    Value = RemoveTeamMember.Name,
-                }
-            };
+            new Section(
+                id: user.UserId,
+                text: $"*<@{user.UserId}>*",
+                accessory: new Button(
+                    id: _removeTeamMember,
+                    value: user.Id.ToString(),
+                    text: "Remove",
+                    style: ButtonStyle.Danger));
     }
 }

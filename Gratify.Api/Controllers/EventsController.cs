@@ -1,6 +1,5 @@
 using System.Threading.Tasks;
 using Gratify.Api.Database;
-using Gratify.Api.Modals;
 using Gratify.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Slack.Client.Events;
@@ -11,13 +10,11 @@ namespace Gratify.Api.Controllers
     [Route("[controller]")]
     public class EventsController : ControllerBase
     {
-        private readonly ISlackService _slackService;
         private readonly InteractionService _interactions;
         private readonly GratsDb _database;
 
-        public EventsController(ISlackService slackService, InteractionService interactions, GratsDb database)
+        public EventsController(InteractionService interactions, GratsDb database)
         {
-            _slackService = slackService;
             _interactions = interactions;
             _database = database;
         }
@@ -37,11 +34,7 @@ namespace Gratify.Api.Controllers
 
         private async Task<IActionResult> ShowAppHome(AppHomeOpened appHomeOpened)
         {
-            var appHome = new ShowAppHome(_database, _interactions);
-            var homeBlocks = await appHome.Draw(appHomeOpened);
-            var userId = appHomeOpened.User;
-
-            await _slackService.PublishModal(userId, homeBlocks);
+            await _interactions.ShowAppHome(appHomeOpened.User);
 
             return Ok();
         }

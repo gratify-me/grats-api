@@ -13,6 +13,13 @@ namespace Slack.Client.BlockKit.LayoutBlocks
             Type = TypeName;
         }
 
+        public Actions(string id, object[] elements)
+        {
+            Type = TypeName;
+            BlockId = id;
+            Elements = elements;
+        }
+
         public const string TypeName = "actions";
 
         /// <summary>

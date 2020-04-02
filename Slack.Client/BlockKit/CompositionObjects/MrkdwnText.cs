@@ -15,6 +15,12 @@ namespace Slack.Client.BlockKit.CompositionObjects
             Type = TypeName;
         }
 
+        public MrkdwnText(string text)
+        {
+            Type = TypeName;
+            Text = text;
+        }
+
         /// <summary>
         /// When set to false (as is default) URLs will be auto-converted into links,
         /// conversation names will be link-ified, and certain mentions will be automatically parsed.

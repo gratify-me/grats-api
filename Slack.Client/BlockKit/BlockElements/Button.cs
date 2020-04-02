@@ -19,6 +19,42 @@ namespace Slack.Client.BlockKit.BlockElements
             Type = TypeName;
         }
 
+        public Button(string id, Guid correlationId, string text, ButtonStyle? style = null)
+        {
+            Type = TypeName;
+            ActionId = id;
+            Value = correlationId.ToString();
+            Text = new PlainText(text);
+
+            if (style.HasValue)
+            {
+                Style = style.Value switch
+                {
+                    ButtonStyle.Primary => "primary",
+                    ButtonStyle.Danger => "danger",
+                    _ => throw new ArgumentOutOfRangeException($"Unknown {typeof(ButtonStyle)}."),
+                };
+            }
+        }
+
+        public Button(string id, string value, string text, ButtonStyle? style = null)
+        {
+            Type = TypeName;
+            ActionId = id;
+            Value = value;
+            Text = new PlainText(text);
+
+            if (style.HasValue)
+            {
+                Style = style.Value switch
+                {
+                    ButtonStyle.Primary => "primary",
+                    ButtonStyle.Danger => "danger",
+                    _ => throw new ArgumentOutOfRangeException($"Unknown {typeof(ButtonStyle)}."),
+                };
+            }
+        }
+
         /// <summary>
         /// A text object that defines the button's text. Maximum length for the text in this field is 75 characters.
         /// </summary>

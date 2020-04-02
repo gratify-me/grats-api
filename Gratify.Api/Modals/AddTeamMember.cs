@@ -1,5 +1,5 @@
+using System;
 using System.Threading.Tasks;
-using Gratify.Api.Database;
 using Gratify.Api.Services;
 using Slack.Client.BlockKit.BlockElements.Selects;
 using Slack.Client.BlockKit.LayoutBlocks;
@@ -11,18 +11,17 @@ namespace Gratify.Api.Modals
 {
     public class AddTeamMember
     {
-        private readonly GratsDb _database;
         private readonly InteractionService _interactions;
 
-        public AddTeamMember(GratsDb database, InteractionService interactions)
+        public AddTeamMember(InteractionService interactions)
         {
-            _database = database;
             _interactions = interactions;
         }
 
-        public Modal Draw(BlockActions interaction) =>
+        public Modal Modal() =>
             new Modal(
                 id: typeof(AddTeamMember),
+                correlationId: Guid.NewGuid(),
                 title: "New member",
                 submit: "Add member",
                 close: "Cancel",
@@ -38,26 +37,17 @@ namespace Gratify.Api.Modals
 
         public async Task<ResponseAction> OnSubmit(ViewSubmission submission)
         {
-            var newTeamMember = submission.GetStateValue<User>("SelectUser.NewTeamMemeber");
-            if (newTeamMember == User.Slackbot)
+            var newTeamMember = submission.GetStateValue<UsersSelect>("SelectUser.NewTeamMemeber");
+            if (newTeamMember.SelectedUser == User.Slackbot)
             {
                 return new ResponseActionErrors("SelectReceiver", "Slackbot is not a valid user");
             }
 
-            // TODO: Maybe handle this as an interaction that can fail.
-            // I.e. if user is already assigned to a team, show a waring popup.
-            var member = await _database.Users.FindAsync(newTeamMember.Id);
-            if (member == null)
-            {
-                member = new Database.Entities.User { UserId = newTeamMember.Id };
-                await _database.Users.AddAsync(member);
-            }
+            await _interactions.AddTeamMember(
+                teamId: submission.Team.Id,
+                userId: submission.User.Id,
+                teamMemberId: newTeamMember.SelectedUserId);
 
-            member.DefaultReviewer = submission.User.Id;
-            await _database.SaveChangesAsync();
-            await _interactions.UpdateHomeTab(submission.User);
-
-            // TODO: Something needs to update the HomeView.
             return new ResponseActionClose();
         }
     }

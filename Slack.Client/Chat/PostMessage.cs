@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using Slack.Client.BlockKit.LayoutBlocks;
 
 namespace Slack.Client.Chat
 {
@@ -9,6 +10,15 @@ namespace Slack.Client.Chat
     /// </summary>
     public class PostMessage : MessagePayload
     {
+        public PostMessage()
+        { }
+
+        public PostMessage(string text, LayoutBlock[] blocks)
+        {
+            Text = text;
+            Blocks = blocks;
+        }
+
         /// <summary>
         /// Channel, private group, or IM channel to send message to. Can be an encoded ID, or a name. See below for more details.
         /// </summary>
