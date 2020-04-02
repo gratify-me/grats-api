@@ -2,12 +2,12 @@
 
 namespace Gratify.Api.Migrations
 {
-    public partial class NullableGratsApprover : Migration
+    public partial class DefaultReviewerShouldBeNullable : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<string>(
-                name: "GratsApprover",
+                name: "DefaultReviewer",
                 table: "Users",
                 maxLength: 100,
                 nullable: true,
@@ -19,7 +19,7 @@ namespace Gratify.Api.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.AlterColumn<string>(
-                name: "GratsApprover",
+                name: "DefaultReviewer",
                 table: "Users",
                 type: "nvarchar(100)",
                 maxLength: 100,

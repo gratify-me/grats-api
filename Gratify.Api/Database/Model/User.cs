@@ -17,7 +17,6 @@ namespace Gratify.Api.Database.Entities
         [MaxLength(100)]
         public string UserId { get; private set; }
 
-        [Required]
         [MaxLength(100)]
         public string DefaultReviewer { get; set; }
 
