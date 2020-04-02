@@ -3,8 +3,8 @@ name: Grats.Api CI
 on: [push]
 
 env:
-  GRATS_API_PROJECT: Grats.Api/Gratify.Grats.Api.csproj
-  GRATS_API_TEST_PROJECT: Grats.Api.Test/Gratify.Grats.Api.Test.csproj
+  GRATIFY_API_PROJECT: Gratify.Api/Gratify.Api.csproj
+  GRATIFY_API_TEST_PROJECT: Gratify.Api.Test/Gratify.Api.Test.csproj
   RESOURCE_GROUP_NAME: Gratify
 
 jobs:
@@ -23,23 +23,23 @@ jobs:
 
     - name: Restore Grats.Api.Test
       run: |
-        dotnet restore ${{env.GRATS_API_TEST_PROJECT}}
+        dotnet restore ${{env.GRATIFY_API_TEST_PROJECT}}
 
     - name: Build Grats.Api.Test
       run: |
-        dotnet build ${{env.GRATS_API_TEST_PROJECT}} \
+        dotnet build ${{env.GRATIFY_API_TEST_PROJECT}} \
           --configuration Release \
           --no-restore
 
     - name: Test Grats.Api.Test
       run: |
-        dotnet test ${{env.GRATS_API_TEST_PROJECT}} \
+        dotnet test ${{env.GRATIFY_API_TEST_PROJECT}} \
           --configuration Release \
           --no-build
 
     - name: Publish Grats.Api
       run: |
-        dotnet publish ${{env.GRATS_API_PROJECT}} \
+        dotnet publish ${{env.GRATIFY_API_PROJECT}} \
           --output ${{env.DOTNET_ROOT}}/app \
           --configuration Release \
           --no-build

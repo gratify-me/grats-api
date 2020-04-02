@@ -1,8 +1,8 @@
-Gratify.Grats.Api
-=================
+Gratify.Api
+===========
 _An API for sending, approving and receiving Grats._
 
-![CI status badge](https://github.com/gratify-me/grats-api/workflows/Grats.Api%20CI/badge.svg)
+![CI status badge](https://github.com/gratify-me/grats-api/workflows/Gratify.Api%20CI/badge.svg)
 
 Getting started
 ---------------
@@ -22,18 +22,18 @@ Start by cloning this repo:
 $> git clone https://github.com/gratify-me/grats-api.git
 ```
 
-Then navigate into the `grats-api/Grats.Api/` folder and start the application with `dotnet run`:
+Then navigate into the `grats-api/Gratify.Api/` folder and start the application with `dotnet run`:
 ```shell
-$ grats-api/Grats.Api> dotnet run
+$ grats-api/Gratify.Api> dotnet run
 ```
 
 Open your favorite browser, and navigate to [localhost:5001/swagger](https://localhost:5001/swagger). This should open [Swagger UI](https://swagger.io/tools/swagger-ui/), where you can try out the API.
 
 ![Animation showing how to use Swagger UI](Images/grats-api-swagger.gif)
 
-If you want to run the tests, navigate into the `grats-api/Grats.Api.Test/` folder and run `dotnet test`:
+If you want to run the tests, navigate into the `grats-api/Gratify.Api.Test/` folder and run `dotnet test`:
 ```shell
-$ grats-api/Grats.Api.Test> dotnet test
+$ grats-api/Gratify.Api.Test> dotnet test
 ```
 
 Continous Integration
