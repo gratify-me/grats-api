@@ -33,7 +33,7 @@ namespace Gratify.Api.Controllers
                 _ => Ok(),
             };
 
-        public async Task<IActionResult> SendGrats(SlashCommand slashCommand)
+        private async Task<IActionResult> SendGrats(SlashCommand slashCommand)
         {
             var draft = new Draft(
                 correlationId: Guid.NewGuid(),
