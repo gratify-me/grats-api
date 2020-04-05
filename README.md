@@ -1,8 +1,8 @@
 Gratify.Api
 ===========
-_An API for sending, approving and receiving Grats._
+_An API for sending, approving and receiving Grats. View [Swagger UI](https://grats-api.azurewebsites.net/swagger/index.html) for more details._
 
-![CI status badge](https://github.com/gratify-me/grats-api/workflows/Gratify.Api%20CI/badge.svg)
+![Grats.Api CI](https://github.com/gratify-me/grats-api/workflows/Grats.Api%20CI/badge.svg)
 
 Getting started
 ---------------
