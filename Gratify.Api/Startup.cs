@@ -55,15 +55,8 @@ namespace Gratify.Api
 
             services.AddTransient<InteractionService>();
 
-            var connectionString = Configuration.GetConnectionString("GratsDb");
-            if (connectionString.Contains('<'))
-            {
-                services.AddDbContext<GratsDb>(options => options.UseInMemoryDatabase("Grats.Api.Database.InMemory"));
-            }
-            else
-            {
-                services.AddDbContext<GratsDb>(options => options.UseSqlServer(connectionString));
-            }
+            var databaseSettings = Configuration.GetSection("DatabaseSettings").Get<DatabaseSettings>();
+            services.AddGratsDb(databaseSettings);
         }
 
         public void Configure(IApplicationBuilder application, IWebHostEnvironment environment)

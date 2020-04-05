@@ -24,7 +24,7 @@ $> git clone https://github.com/gratify-me/grats-api.git
 
 Then navigate into the `grats-api/Gratify.Api/` folder and start the application with `dotnet run`:
 ```shell
-$ grats-api/Gratify.Api> dotnet run
+$ Gratify.Api> dotnet run
 ```
 
 Open your favorite browser, and navigate to [localhost:5001/swagger](https://localhost:5001/swagger). This should open [Swagger UI](https://swagger.io/tools/swagger-ui/), where you can try out the API.
@@ -33,8 +33,23 @@ Open your favorite browser, and navigate to [localhost:5001/swagger](https://loc
 
 If you want to run the tests, navigate into the `grats-api/Gratify.Api.Test/` folder and run `dotnet test`:
 ```shell
-$ grats-api/Gratify.Api.Test> dotnet test
+$ Gratify.Api.Test> dotnet test
 ```
+
+Configuration
+-------------
+
+### Development configuration
+If you wish to override any of the configuration values when developing, create a new file in `/Gratify.Api` called `appsettings.Development.json`, and copy the contents of [Gratify.Api/appsettings.json](Gratify.Api/appsettings.json) into this file.
+
+Any setting in `appsettings.Development.json` will override the settings in `appsettings.json`, but `appsettings.Development.json` is ignored by git, so you're less likely to check in secrets to source control.
+
+### DatabaseSettings
+**UseInMemory** specifies if the application should use an in-memory database instead of connecting to a persistent SQL database. It should always be set to `false` when the application is deployed, but it set to `true` in [Gratify.Api/appsettings.json](Drops.Api/appsettings.json), in order to better facilitate local development. When using an in-memory database, no state is persisted between restart of the application.
+
+**ApplyMigrations** determines if the application should check for pending database migrations on startup, and apply them to the database. Should not be used with an in-memory database, since the in-memory database don't require migrations.
+
+**ConnectionString** is the connection information used to connect to a SQL database. Is not needed for an in-memory database, and should never be checked in to Git.
 
 Continous Integration
 ---------------------
@@ -71,3 +86,52 @@ The output of `az ad sp create-for-rbac` should be a json object, containing the
 ```
 
 You can view the registered service principal in the Azure portal, by lookin at the [App registrations blade](https://portal.azure.com/#blade/Microsoft_AAD_IAM/ActiveDirectoryMenuBlade/RegisteredApps) under Azure Active Directory.
+
+Database Changes
+----------------
+
+Database schema changes is managed using [EF Core migrations](https://docs.microsoft.com/en-us/ef/core/managing-schemas/migrations/). The following steps describe how database changes are created and applied:
+1. A change is made that requires a database schema change. Usually this involves a change in one of the entities in the `Gratify.Api.Database.Model` namespace.
+2. A new database migration is created using `dotnet ef migrations add`.
+3. The generated migration files are checked in along with other changes.
+4. When the API is released, `MigrationService` will execute on startup, and any pending migrations are applied to the database.
+
+### Creating a new database migration
+The [.NET Core tool](https://docs.microsoft.com/en-us/dotnet/core/tools/global-tools) `dotnet ef` must be installed, in order to create new migrations. You can install this globally on your machine using the following command:
+
+```shell
+$> dotnet tool install --global dotnet-ef
+```
+
+Before creating a new migration, you need configure the API with connection strings to the database. You also need to set `UseInMemory` and `ApplyMigrations` to `false`.
+
+```json
+"DatabaseSettings": {
+    "UseInMemory": false,
+    "ApplyMigrations": false,
+    "ConnectionString": "<development database connection string>"
+}
+```
+
+Now you can create a new migration using `dotnet ef migrations add`. This will create a new migration under the `/Gratify.Api/Migrations` folder. These files should be checked in.
+
+```shell
+$ Gratify.Api> dotnet ef migrations add <Description of database change>
+```
+
+### Debugging failed database migrations
+If a migration fails, you might want to debug the migration locally. This can be done by configuring the API with the database connection string, and setting `ApplyMigrations` to `true`.
+
+```json
+"DatabaseSettings": {
+    "UseInMemory": false,
+    "ApplyMigrations": true,
+    "ConnectionString": "<database connection string>"
+}
+```
+
+Now you can run Gratify.Api, and it'll try to apply the migrations in the same way that it does when it's deployed to the development environment. You should now be able to debug the problem locally and hopefully fix it.
+
+_**Beware:** Setting `ApplyMigrations` to `true` while running the API against a database will migrate the database. This should be done with caution, since it can crash the already deployed version of the API, or irreversibly destroy data._
+
+When you're done debugging, you'll usually want to [revert the migration](https://docs.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=dotnet-core-cli#revert-a-migration), so the actual migration will be preformed during the release.
