@@ -14,7 +14,7 @@ namespace Gratify.Api.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class InteractiveController : ControllerBase
+    public class InteractionsController : ControllerBase
     {
         private readonly JsonSerializerOptions _options;
         private readonly SendGrats _sendGrats;
@@ -23,7 +23,7 @@ namespace Gratify.Api.Controllers
         private readonly RequestGratsReview _requestGratsReview;
         private readonly ShowAppHome _showAppHome;
 
-        public InteractiveController(
+        public InteractionsController(
             SendGrats sendGrats,
             ForwardGrats forwardGrats,
             AddTeamMember addTeamMember,

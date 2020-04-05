@@ -19,7 +19,7 @@ namespace Gratify.Api.Modals
             _interactions = interactions;
         }
 
-        public Modal Modal(Draft draft) =>
+        public Modal Modal(Draft draft, string userId = null) =>
             new Modal(
                 id: typeof(SendGrats),
                 correlationId: draft.CorrelationId,
@@ -33,7 +33,8 @@ namespace Gratify.Api.Modals
                         label: "Who should receive Grats?",
                         element: new UsersSelect(
                             id: "Recipient",
-                            placeholder: "Select a user")),
+                            placeholder: "Select a user",
+                            initialUser: userId)),
 
                     new Input(
                         id: "InputChallenge",

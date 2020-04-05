@@ -17,11 +17,16 @@ namespace Slack.Client.BlockKit.BlockElements.Selects
             Type = TypeName;
         }
 
-        public UsersSelect(string id, string placeholder)
+        public UsersSelect(string id, string placeholder, string initialUser = null)
         {
             Type = TypeName;
             ActionId = id;
             Placeholder = new PlainText(placeholder);
+
+            if (initialUser != null)
+            {
+                InitialUser = initialUser;
+            }
         }
 
         /// <summary>
