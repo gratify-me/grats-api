@@ -14,11 +14,13 @@ namespace Gratify.Api.Controllers
     {
         private readonly InteractionService _interactions;
         private readonly SlackService _slackService;
+        private readonly SendGrats _sendGrats;
 
-        public GratsController(InteractionService interactions, SlackService slackService)
+        public GratsController(InteractionService interactions, SlackService slackService, SendGrats sendGrats)
         {
             _interactions = interactions;
             _slackService = slackService;
+            _sendGrats = sendGrats;
         }
 
         [HttpPost]
@@ -31,9 +33,7 @@ namespace Gratify.Api.Controllers
                 author: slashCommand.UserId);
 
             await _interactions.SaveDraft(draft);
-
-            var sendGrats = new SendGrats(_interactions);
-            var modal = sendGrats.Modal(draft);
+            var modal = _sendGrats.Modal(draft);
             await _slackService.OpenModal(slashCommand.TriggerId, modal);
 
             return Ok();

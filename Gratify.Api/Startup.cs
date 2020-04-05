@@ -1,16 +1,13 @@
 using System.Net.Http.Headers;
-using System.Text.Json;
 using Gratify.Api.Database;
+using Gratify.Api.Messages;
+using Gratify.Api.Modals;
 using Gratify.Api.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
-using Slack.Client.BlockKit.BlockElements.Converters;
-using Slack.Client.BlockKit.CompositionObjects.Converters;
-using Slack.Client.BlockKit.LayoutBlocks.Converters;
 using Slack.Client.Events.Converters;
 
 namespace Gratify.Api
@@ -57,6 +54,16 @@ namespace Gratify.Api
 
             var databaseSettings = Configuration.GetSection("DatabaseSettings").Get<DatabaseSettings>();
             services.AddGratsDb(databaseSettings);
+
+            // Add messages
+            services.AddTransient<GratsReceived>();
+            services.AddTransient<RequestGratsReview>();
+
+            // Add modals
+            services.AddTransient<AddTeamMember>();
+            services.AddTransient<ForwardGrats>();
+            services.AddTransient<SendGrats>();
+            services.AddTransient<ShowAppHome>();
         }
 
         public void Configure(IApplicationBuilder application, IWebHostEnvironment environment)

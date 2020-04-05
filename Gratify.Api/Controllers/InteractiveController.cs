@@ -3,10 +3,8 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Web;
-using Gratify.Api.Database;
 using Gratify.Api.Messages;
 using Gratify.Api.Modals;
-using Gratify.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Slack.Client.Interactions;
 using Slack.Client.Interactions.Converters;
@@ -18,14 +16,25 @@ namespace Gratify.Api.Controllers
     [Route("[controller]")]
     public class InteractiveController : ControllerBase
     {
-        private readonly InteractionService _interactions;
-        private readonly GratsDb _database;
         private readonly JsonSerializerOptions _options;
+        private readonly SendGrats _sendGrats;
+        private readonly ForwardGrats _forwardGrats;
+        private readonly AddTeamMember _addTeamMember;
+        private readonly RequestGratsReview _requestGratsReview;
+        private readonly ShowAppHome _showAppHome;
 
-        public InteractiveController(InteractionService interactions, GratsDb database)
+        public InteractiveController(
+            SendGrats sendGrats,
+            ForwardGrats forwardGrats,
+            AddTeamMember addTeamMember,
+            RequestGratsReview requestGratsReview,
+            ShowAppHome showAppHome)
         {
-            _interactions = interactions;
-            _database = database;
+            _sendGrats = sendGrats;
+            _forwardGrats = forwardGrats;
+            _addTeamMember = addTeamMember;
+            _requestGratsReview = requestGratsReview;
+            _showAppHome = showAppHome;
             _options = new JsonSerializerOptions
             {
                 IgnoreNullValues = true
@@ -58,22 +67,19 @@ namespace Gratify.Api.Controllers
             var modalType = Type.GetType(submission.View.CallbackId);
             if (modalType == typeof(SendGrats))
             {
-                var sendGrats = new SendGrats(_interactions);
-                var response = await sendGrats.OnSubmit(submission);
+                var response = await _sendGrats.OnSubmit(submission);
 
                 return response.Result();
             }
             else if (modalType == typeof(ForwardGrats))
             {
-                var forwardGrats = new ForwardGrats(_interactions);
-                var response = await forwardGrats.OnSubmit(submission);
+                var response = await _forwardGrats.OnSubmit(submission);
 
                 return response.Result();
             }
             else if (modalType == typeof(AddTeamMember))
             {
-                var addTeamMember = new AddTeamMember(_interactions);
-                var response = await addTeamMember.OnSubmit(submission);
+                var response = await _addTeamMember.OnSubmit(submission);
 
                 return response.Result();
             }
@@ -97,13 +103,11 @@ namespace Gratify.Api.Controllers
         {
             if (action.ActionId.Contains(typeof(RequestGratsReview).ToString()))
             {
-                var requestGratsReview = new RequestGratsReview(_interactions);
-                await requestGratsReview.OnSubmit(action, responseUrl, triggerId);
+                await _requestGratsReview.OnSubmit(action, responseUrl, triggerId);
             }
             else if (action.ActionId.Contains(typeof(ShowAppHome).ToString()))
             {
-                var showAppHome = new ShowAppHome(_interactions, _database);
-                await showAppHome.OnSubmit(action, triggerId, userId);
+                await _showAppHome.OnSubmit(action, triggerId, userId);
             }
         }
     }

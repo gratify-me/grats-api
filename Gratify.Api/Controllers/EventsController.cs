@@ -1,5 +1,4 @@
 using System.Threading.Tasks;
-using Gratify.Api.Database;
 using Gratify.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 using Slack.Client.Events;
@@ -11,12 +10,10 @@ namespace Gratify.Api.Controllers
     public class EventsController : ControllerBase
     {
         private readonly InteractionService _interactions;
-        private readonly GratsDb _database;
 
-        public EventsController(InteractionService interactions, GratsDb database)
+        public EventsController(InteractionService interactions)
         {
             _interactions = interactions;
-            _database = database;
         }
 
         [HttpPost]

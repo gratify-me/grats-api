@@ -13,7 +13,7 @@ namespace Gratify.Api.Database
         private readonly DatabaseSettings _settings;
         private readonly GratsDb _database;
 
-        public MigrationService(GratsDb database, DatabaseSettings settings, TelemetryClient telemetry)
+        public MigrationService(TelemetryClient telemetry, GratsDb database, DatabaseSettings settings)
         {
             _telemetry = telemetry;
             _settings = settings;
