@@ -53,7 +53,7 @@ namespace Gratify.Api.Controllers
             };
         }
 
-        public async Task<IActionResult> HandleViewSubmission(ViewSubmission submission)
+        private async Task<IActionResult> HandleViewSubmission(ViewSubmission submission)
         {
             var modalType = Type.GetType(submission.View.CallbackId);
             if (modalType == typeof(SendGrats))
