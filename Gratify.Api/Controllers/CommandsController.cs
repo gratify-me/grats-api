@@ -15,14 +15,10 @@ namespace Gratify.Api.Controllers
     {
         private readonly Regex _userIdRegex = new Regex(@"(?<=<@)([A-Z0-9])+(?=\|\w+>)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private readonly InteractionService _interactions;
-        private readonly SlackService _slackService;
-        private readonly SendGrats _sendGrats;
 
-        public CommandsController(InteractionService interactions, SlackService slackService, SendGrats sendGrats)
+        public CommandsController(InteractionService interactions)
         {
             _interactions = interactions;
-            _slackService = slackService;
-            _sendGrats = sendGrats;
         }
 
         [HttpPost]
@@ -41,10 +37,8 @@ namespace Gratify.Api.Controllers
                 createdAt: DateTime.UtcNow,
                 author: slashCommand.UserId);
 
-            await _interactions.SaveDraft(draft);
             var userId = GetUserId(slashCommand);
-            var modal = _sendGrats.Modal(draft, userId);
-            await _slackService.OpenModal(slashCommand.TriggerId, modal);
+            await _interactions.SendGrats(draft, slashCommand.TriggerId, userId);
 
             return Ok();
         }

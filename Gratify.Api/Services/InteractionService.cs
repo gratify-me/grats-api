@@ -17,6 +17,7 @@ namespace Gratify.Api.Services
         private readonly TelemetryClient _telemetry;
         private readonly SlackService _slackService;
         private readonly GratsDb _database;
+        private readonly SendGrats _sendGrats;
         private readonly ForwardGrats _forwardGrats;
         private readonly GratsReceived _gratsReceived;
         private readonly AddTeamMember _addTeamMember;
@@ -33,6 +34,7 @@ namespace Gratify.Api.Services
             _database = database;
 
             // TODO: Find a way to organize this that doesn't require a circular dependency.
+            _sendGrats = new SendGrats(this);
             _forwardGrats = new ForwardGrats(this);
             _gratsReceived = new GratsReceived(this);
             _addTeamMember = new AddTeamMember(this);
@@ -40,10 +42,13 @@ namespace Gratify.Api.Services
             _requestGratsReview = new RequestGratsReview(this);
         }
 
-        public async Task SaveDraft(Draft draft)
+        public async Task SendGrats(Draft draft, string triggerId, string userId = null)
         {
             await _database.AddAsync(draft);
             await _database.SaveChangesAsync();
+
+            var modal = _sendGrats.Modal(draft, userId);
+            await _slackService.OpenModal(triggerId, modal);
         }
 
         public async Task SubmitGratsForReview(Grats grats)

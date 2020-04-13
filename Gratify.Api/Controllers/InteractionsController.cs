@@ -93,13 +93,13 @@ namespace Gratify.Api.Controllers
         {
             foreach (var action in actions.Actions)
             {
-                await HandleBlockAction(action, actions.ResponseUrl, actions.TriggerId, actions.User.Id);
+                await HandleBlockAction(action, actions.ResponseUrl, actions.TriggerId, actions.User.Id, actions.Team.Id);
             }
 
             return Ok();
         }
 
-        private async Task HandleBlockAction(Slack.Client.Interactions.Action action, string responseUrl, string triggerId, string userId)
+        private async Task HandleBlockAction(Slack.Client.Interactions.Action action, string responseUrl, string triggerId, string userId, string teamId)
         {
             if (action.ActionId.Contains(typeof(RequestGratsReview).ToString()))
             {
@@ -107,7 +107,7 @@ namespace Gratify.Api.Controllers
             }
             else if (action.ActionId.Contains(typeof(ShowAppHome).ToString()))
             {
-                await _showAppHome.OnSubmit(action, triggerId, userId);
+                await _showAppHome.OnSubmit(action, triggerId, userId, teamId);
             }
         }
     }

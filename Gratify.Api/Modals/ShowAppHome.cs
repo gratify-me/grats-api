@@ -14,6 +14,7 @@ namespace Gratify.Api.Modals
 {
     public class ShowAppHome
     {
+        private readonly string _sendGrats = $"{typeof(ShowAppHome)}.SendGrats";
         private readonly string _addTeamMember = $"{typeof(ShowAppHome)}.AddTeamMember";
         private readonly string _removeTeamMember = $"{typeof(ShowAppHome)}.RemoveTeamMember";
         private readonly InteractionService _interactions;
@@ -37,6 +38,16 @@ namespace Gratify.Api.Modals
 
             var homeBlocks = new List<LayoutBlock>
             {
+                new Actions(
+                    id: "HomeActions",
+                    elements: new BlockElement[]
+                    {
+                        new Button(
+                            id: _sendGrats,
+                            value: userId,
+                            text: ":grats: Send Grats")
+                    }),
+
                 new Section(
                     id: "YourTeam",
                     text: ":rocket: *Your team*",
@@ -54,7 +65,7 @@ namespace Gratify.Api.Modals
             };
         }
 
-        public async Task OnSubmit(Action action, string triggerId, string userId)
+        public async Task OnSubmit(Action action, string triggerId, string userId, string teamId)
         {
             if (action.ActionId == _addTeamMember)
             {
@@ -65,6 +76,16 @@ namespace Gratify.Api.Modals
                 var memberUserId = int.Parse(action.Value);
                 await _interactions.RemoveTeamMember(userId, memberUserId);
             }
+            else if (action.ActionId == _sendGrats)
+            {
+                var draft = new Draft(
+                    correlationId: System.Guid.NewGuid(),
+                    teamId: teamId,
+                    createdAt: System.DateTime.UtcNow,
+                    author: userId);
+
+                await _interactions.SendGrats(draft, triggerId);
+            }
         }
 
         private Section TeamMemberSection(User user) =>
@@ -74,7 +95,7 @@ namespace Gratify.Api.Modals
                 accessory: new Button(
                     id: _removeTeamMember,
                     value: user.Id.ToString(),
-                    text: "Remove",
+                    text: ":heavy_multiplication_x:",
                     style: ButtonStyle.Danger));
     }
 }
