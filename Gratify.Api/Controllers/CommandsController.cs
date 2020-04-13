@@ -3,7 +3,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Gratify.Api.Database.Entities;
 using Gratify.Api.Dto;
-using Gratify.Api.Modals;
 using Gratify.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
