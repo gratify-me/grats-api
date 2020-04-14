@@ -12,7 +12,7 @@ namespace Gratify.Api.Controllers
     [Route("[controller]")]
     public class CommandsController : ControllerBase
     {
-        private readonly Regex _userIdRegex = new Regex(@"(?<=<@)([A-Z0-9])+(?=\|\w+>)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        private readonly Regex _userIdRegex = new Regex(@"(?<=<@)([A-Z0-9])+(?=\|.+>)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private readonly InteractionService _interactions;
 
         public CommandsController(InteractionService interactions)
