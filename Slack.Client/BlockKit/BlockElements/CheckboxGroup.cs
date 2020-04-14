@@ -18,6 +18,13 @@ namespace Slack.Client.BlockKit.BlockElements
             Type = TypeName;
         }
 
+        public CheckboxGroup(string id, Option[] options)
+        {
+            Type = TypeName;
+            ActionId = id;
+            Options = options;
+        }
+
         /// <summary>
         /// An array of option objects.
         /// </summary>
@@ -37,5 +44,11 @@ namespace Slack.Client.BlockKit.BlockElements
         /// </summary>
         [JsonPropertyName("confirm")]
         public ConfirmationDialog Confirm { get; set; }
+
+        /// <summary>
+        /// The options selected by the user, as returned from Slack.
+        /// </summary>
+        [JsonPropertyName("selected_options")]
+        public Option[] SelectedOptions { get; set; }
     }
 }
