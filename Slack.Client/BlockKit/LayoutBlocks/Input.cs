@@ -17,12 +17,13 @@ namespace Slack.Client.BlockKit.LayoutBlocks
             Type = TypeName;
         }
 
-        public Input(string id, string label, BlockElement element)
+        public Input(string id, string label, BlockElement element, bool optional = false)
         {
             Type = TypeName;
             BlockId = id;
             Label = new PlainText(label);
             Element = element;
+            Optional = optional;
         }
 
         public const string TypeName = "input";
