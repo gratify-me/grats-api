@@ -61,9 +61,9 @@ namespace Gratify.Api.Modals
         public async Task<ResponseAction> OnSubmit(ViewSubmission submission)
         {
             var recipient = submission.GetStateValue<UsersSelect>("InputRecipient.Recipient");
-            if (recipient.SelectedUser == Slack.Client.Primitives.User.Slackbot)
+            if (recipient.SelectedUser == submission.User)
             {
-                return new ResponseActionErrors("InputRecipient", "Slackbot is not a valid recipient");
+                return new ResponseActionErrors("InputRecipient", "You cannot send grats to yourself");
             }
 
             var challenge = submission.GetStateValue<PlainTextInput>("InputChallenge.Challenge");
@@ -94,7 +94,7 @@ namespace Gratify.Api.Modals
 
             await _interactions.SubmitGratsForReview(grats);
 
-            return new ResponseActionClose();
+            return new ResponseActionClear();
         }
     }
 }

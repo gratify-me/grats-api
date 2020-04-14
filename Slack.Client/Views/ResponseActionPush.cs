@@ -10,6 +10,14 @@ namespace Slack.Client.Views
     /// </summary>
     public class ResponseActionPush : ResponseAction
     {
+        public ResponseActionPush()
+        { }
+
+        public ResponseActionPush(ViewPayload view)
+        {
+            View = view;
+        }
+
         [JsonPropertyName("response_action")]
         public string ResponseActionType => "push";
 

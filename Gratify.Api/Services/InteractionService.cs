@@ -9,6 +9,7 @@ using Gratify.Api.Modals;
 using Microsoft.ApplicationInsights;
 using Microsoft.EntityFrameworkCore;
 using Slack.Client.Chat;
+using Slack.Client.Views;
 
 namespace Gratify.Api.Services
 {
@@ -18,6 +19,7 @@ namespace Gratify.Api.Services
         private readonly SlackService _slackService;
         private readonly GratsDb _database;
         private readonly SendGrats _sendGrats;
+        private readonly AllGratsSpent _allGratsSpent;
         private readonly DenyGrats _denyGrats;
         private readonly ForwardGrats _forwardGrats;
         private readonly GratsReceived _gratsReceived;
@@ -36,6 +38,7 @@ namespace Gratify.Api.Services
 
             // TODO: Find a way to organize this that doesn't require a circular dependency.
             _sendGrats = new SendGrats(this);
+            _allGratsSpent = new AllGratsSpent(this);
             _denyGrats = new DenyGrats(this);
             _forwardGrats = new ForwardGrats(this);
             _gratsReceived = new GratsReceived(this);
@@ -49,8 +52,35 @@ namespace Gratify.Api.Services
             await _database.AddAsync(draft);
             await _database.SaveChangesAsync();
 
-            var modal = _sendGrats.Modal(draft, userId);
-            await _slackService.OpenModal(triggerId, modal);
+            var periodInDays = 30;
+            var approvedGratsLastPeriod = await _database.Approvals
+                .Select(approval => approval.Review.Grats)
+                .Where(grats => grats.Draft.Author == draft.Author)
+                .Where(grats => grats.CreatedAt > DateTime.UtcNow.AddDays(-periodInDays))
+                .OrderByDescending(grats => grats.CreatedAt)
+                .FirstOrDefaultAsync();
+
+            if (approvedGratsLastPeriod != default)
+            {
+                var allGratsSpentModal = _allGratsSpent.Modal(draft.CorrelationId, approvedGratsLastPeriod.CreatedAt, periodInDays);
+                await _slackService.OpenModal(triggerId, allGratsSpentModal);
+            }
+            else
+            {
+                var modal = _sendGrats.Modal(draft, userId);
+                await _slackService.OpenModal(triggerId, modal);
+            }
+        }
+
+        public async Task<Modal> SendGratsAnyway(Guid correlationId)
+        {
+            var draft = await _database.IncompleteDrafts.SingleOrDefaultAsync(draft => draft.CorrelationId == correlationId);
+            if (draft == null)
+            {
+                TrackCorrelationId($"{nameof(SendGratsAnyway)}: Draft not found", correlationId);
+            }
+
+            return _sendGrats.Modal(draft);
         }
 
         public async Task SubmitGratsForReview(Grats grats)
@@ -90,7 +120,7 @@ namespace Gratify.Api.Services
             var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == correlationId);
             if (review == null)
             {
-                TrackCorrelationId($"{nameof(OpenForwardReview)}: Review not found", correlationId);
+                TrackCorrelationId($"{nameof(OpenDenyGrats)}: Review not found", correlationId);
                 return;
             }
 
@@ -116,7 +146,7 @@ namespace Gratify.Api.Services
             var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == correlationId);
             if (review == null)
             {
-                TrackCorrelationId($"{nameof(SubmitGratsForReview)}: Review not found", correlationId);
+                TrackCorrelationId($"{nameof(ForwardReview)}: Review not found", correlationId);
                 return;
             }
 
@@ -140,7 +170,7 @@ namespace Gratify.Api.Services
             var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == approval.CorrelationId);
             if (review == null)
             {
-                TrackEntity($"{nameof(SubmitGratsForReview)}: Approval not found", approval);
+                TrackEntity($"{nameof(ApproveGrats)}: Approval not found", approval);
                 return;
             }
 
@@ -162,7 +192,7 @@ namespace Gratify.Api.Services
             var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == denial.CorrelationId);
             if (review == null)
             {
-                TrackEntity($"{nameof(SubmitGratsForReview)}: Denial not found", denial);
+                TrackEntity($"{nameof(DenyGrats)}: Denial not found", denial);
                 return;
             }
 
@@ -200,7 +230,7 @@ namespace Gratify.Api.Services
             var teamMember = await _database.Users.FindAsync(teamMemberId);
             if (teamMember == null)
             {
-                TrackUserId($"{nameof(SubmitGratsForReview)}: User not found", userId);
+                TrackUserId($"{nameof(RemoveTeamMember)}: User not found", userId);
                 return;
             }
 

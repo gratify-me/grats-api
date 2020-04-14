@@ -8,7 +8,9 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
+using Slack.Client.Chat.Converters;
 using Slack.Client.Events.Converters;
+using Slack.Client.Views.Converters;
 
 namespace Gratify.Api
 {
@@ -48,6 +50,8 @@ namespace Gratify.Api
                 {
                     options.JsonSerializerOptions.IgnoreNullValues = true;
                     options.JsonSerializerOptions.Converters.Add(new EventWrapperConverter());
+                    options.JsonSerializerOptions.Converters.Add(new ViewPayloadConverter());
+                    options.JsonSerializerOptions.Converters.Add(new MessagePayloadConverter());
                 });
 
             services.AddTransient<InteractionService>();
@@ -64,6 +68,7 @@ namespace Gratify.Api
             services.AddTransient<DenyGrats>();
             services.AddTransient<ForwardGrats>();
             services.AddTransient<SendGrats>();
+            services.AddTransient<AllGratsSpent>();
             services.AddTransient<ShowAppHome>();
         }
 
