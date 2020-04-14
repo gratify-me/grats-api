@@ -61,16 +61,17 @@ jobs:
             --location northeurope \
             --name ${{env.RESOURCE_GROUP_NAME}}
 
-    - name: Deploy ARM template
-      if: github.ref == 'refs/heads/master'
-      uses: azure/CLI@v1
-      with:
-        azcliversion: 2.0.72
-        inlineScript: |
-          az group deployment create \
-            --verbose \
-            --resource-group ${{env.RESOURCE_GROUP_NAME}} \
-            --template-file arm-template.json
+    # ARM template is not complete, so skipping this for now
+    # - name: Deploy ARM template
+    #   if: github.ref == 'refs/heads/master'
+    #   uses: azure/CLI@v1
+    #   with:
+    #     azcliversion: 2.0.72
+    #     inlineScript: |
+    #       az group deployment create \
+    #         --verbose \
+    #         --resource-group ${{env.RESOURCE_GROUP_NAME}} \
+    #         --template-file arm-template.json
 
     - name: 'Deploy Grats.Api'
       if: github.ref == 'refs/heads/master'
