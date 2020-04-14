@@ -52,5 +52,17 @@ namespace Slack.Client.BlockKit.CompositionObjects
         /// </summary>
         [JsonPropertyName("url")]
         public Uri Url { get; set; }
+
+        public override bool Equals(object obj) => obj is Option other && Equals(other);
+
+        public override int GetHashCode() => Value.GetHashCode();
+
+        public static bool operator ==(Option first, Option second) => first.Value == second.Value;
+
+        public static bool operator !=(Option first, Option second) => first.Value != second.Value;
+
+        public bool Equals(Option other) => Value == other.Value;
+
+        public override string ToString() => Value.ToString();
     }
 }
