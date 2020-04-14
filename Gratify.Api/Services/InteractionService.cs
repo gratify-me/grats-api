@@ -96,19 +96,24 @@ namespace Gratify.Api.Services
             await _slackService.OpenModal(triggerId, modal);
         }
 
-        // TODO: Handle transfer of responsibility.
-        public async Task ForwardReview(Review newReview, bool transferReviewResponsibility)
+        public async Task ForwardReview(Guid correlationId, string newReviewerId, bool? transferReviewResponsibility)
         {
-            var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == newReview.CorrelationId);
+            var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == correlationId);
             if (review == null)
             {
-                TrackEntity($"{nameof(SubmitGratsForReview)}: Review not found", newReview);
+                TrackCorrelationId($"{nameof(SubmitGratsForReview)}: Review not found", correlationId);
                 return;
             }
 
-            newReview.Grats = review.Grats;
-            newReview.TeamId = review.TeamId;
-            newReview.ForwardedFrom = review.Id;
+            if (transferReviewResponsibility.GetValueOrDefault(false))
+            {
+                // TODO: This might be combined into one query.
+                var grats = await _database.Grats.SingleAsync(grats => grats.CorrelationId == correlationId);
+                var user = await _database.Users.SingleAsync(user => user.UserId == grats.Recipient);
+                user.DefaultReviewer = newReviewerId;
+            }
+
+            var newReview = review.ForwardTo(newReviewerId);
             await _database.AddAsync(newReview);
             await _database.SaveChangesAsync();
 

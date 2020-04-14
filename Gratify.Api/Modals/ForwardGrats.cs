@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading.Tasks;
 using Gratify.Api.Database.Entities;
 using Gratify.Api.Services;
@@ -5,6 +6,7 @@ using Slack.Client.BlockKit.BlockElements;
 using Slack.Client.BlockKit.BlockElements.Selects;
 using Slack.Client.BlockKit.CompositionObjects;
 using Slack.Client.BlockKit.LayoutBlocks;
+using Slack.Client.Chat;
 using Slack.Client.Interactions;
 using Slack.Client.Views;
 
@@ -35,12 +37,13 @@ namespace Gratify.Api.Modals
                             id: "Reviewer",
                             placeholder: "Select a user")),
 
-                    new Section(
-                        id: "SelectTransferReviewResponsibility",
-                        text: "Transfer approval responsibility permanently?",
-                        accessory: new RadioButtonGroup(
+                    new Input(
+                        id: "InputTransferReviewResponsibility",
+                        label: "Transfer approval responsibility permanently?",
+                        element: new CheckboxGroup(
                             id: "TransferReviewResponsibility",
-                            options: new Option[] { Option.No, Option.Yes })),
+                            options: new Option[] { Option.Yes }),
+                        optional: true),
                 });
 
         public async Task<ResponseAction> OnSubmit(ViewSubmission submission)
@@ -51,15 +54,11 @@ namespace Gratify.Api.Modals
                 return new ResponseActionErrors("SelectReceiver", "Slackbot is not a valid user");
             }
 
-            var transferResponsibility = submission.GetStateValue<string>("SelectTransferReviewResponsibility.TransferReviewResponsibility");
-            var newReview = new Review(
-                correlationId: submission.CorrelationId,
-                requestedAt: System.DateTime.UtcNow,
-                reviewer: newReviewer.SelectedUserId);
-
+            var transferResponsibility = submission.GetStateValue<CheckboxGroup>("InputTransferReviewResponsibility.TransferReviewResponsibility");
             await _interactions.ForwardReview(
-                newReview: newReview,
-                transferReviewResponsibility: transferResponsibility == Option.Yes.Value);
+                correlationId: submission.CorrelationId,
+                newReviewerId: newReviewer.SelectedUserId,
+                transferReviewResponsibility: transferResponsibility.SelectedOptions?.Any(option => option == Option.Yes));
 
             return new ResponseActionClose();
         }
