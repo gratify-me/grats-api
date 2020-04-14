@@ -34,7 +34,12 @@ namespace Slack.Client.Interactions
         {
             var first = keys.First();
             var rest = keys.Skip(1);
-            var value = values[first].GetRawText();
+            if (!values.TryGetValue(first, out var jsonElement))
+            {
+                return default;
+            }
+
+            var value = jsonElement.GetRawText();
             if (!rest.Any())
             {
                 // TODO: Slack sender en variant av input-elementet som ble fylt ut. Ikke bare en verdi som kan hentes direkte.
