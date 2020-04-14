@@ -21,6 +21,7 @@ namespace Gratify.Api.Database
             Reviews
                 .Include(review => review.Grats)
                 .ThenInclude(grats => grats.Draft)
+                .Where(review => !review.IsForwarded)
                 .Where(review => review.Approval == null)
                 .Where(review => review.Denial == null);
 
