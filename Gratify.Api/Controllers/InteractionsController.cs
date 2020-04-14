@@ -18,6 +18,7 @@ namespace Gratify.Api.Controllers
     {
         private readonly JsonSerializerOptions _options;
         private readonly SendGrats _sendGrats;
+        private readonly DenyGrats _denyGrats;
         private readonly ForwardGrats _forwardGrats;
         private readonly AddTeamMember _addTeamMember;
         private readonly RequestGratsReview _requestGratsReview;
@@ -25,12 +26,14 @@ namespace Gratify.Api.Controllers
 
         public InteractionsController(
             SendGrats sendGrats,
+            DenyGrats denyGrats,
             ForwardGrats forwardGrats,
             AddTeamMember addTeamMember,
             RequestGratsReview requestGratsReview,
             ShowAppHome showAppHome)
         {
             _sendGrats = sendGrats;
+            _denyGrats = denyGrats;
             _forwardGrats = forwardGrats;
             _addTeamMember = addTeamMember;
             _requestGratsReview = requestGratsReview;
@@ -68,6 +71,12 @@ namespace Gratify.Api.Controllers
             if (modalType == typeof(SendGrats))
             {
                 var response = await _sendGrats.OnSubmit(submission);
+
+                return response.Result();
+            }
+            else if (modalType == typeof(DenyGrats))
+            {
+                var response = await _denyGrats.OnSubmit(submission);
 
                 return response.Result();
             }

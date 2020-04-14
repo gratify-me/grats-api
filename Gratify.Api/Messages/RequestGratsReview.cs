@@ -79,15 +79,7 @@ namespace Gratify.Api.Messages
             }
             else if (action.ActionId == _deny)
             {
-                var denial = new Denial(
-                    correlationId: action.CorrelationId,
-                    reason: "To be implemented",
-                    deniedAt: System.DateTime.UtcNow);
-
-                await _interactions.DenyGrats(
-                    denial: denial,
-                    respondWith: new ResponseMessage("That's OK for now (but in the future you might have to do more to deny grats 😉)"),
-                    responseUrl: responseUrl);
+                await _interactions.OpenDenyGrats(action.CorrelationId, triggerId);
             }
             else if (action.ActionId == _forward)
             {

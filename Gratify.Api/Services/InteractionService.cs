@@ -18,6 +18,7 @@ namespace Gratify.Api.Services
         private readonly SlackService _slackService;
         private readonly GratsDb _database;
         private readonly SendGrats _sendGrats;
+        private readonly DenyGrats _denyGrats;
         private readonly ForwardGrats _forwardGrats;
         private readonly GratsReceived _gratsReceived;
         private readonly AddTeamMember _addTeamMember;
@@ -35,6 +36,7 @@ namespace Gratify.Api.Services
 
             // TODO: Find a way to organize this that doesn't require a circular dependency.
             _sendGrats = new SendGrats(this);
+            _denyGrats = new DenyGrats(this);
             _forwardGrats = new ForwardGrats(this);
             _gratsReceived = new GratsReceived(this);
             _addTeamMember = new AddTeamMember(this);
@@ -81,6 +83,19 @@ namespace Gratify.Api.Services
             await _database.SaveChangesAsync();
 
             await RequestReview(review);
+        }
+
+        public async Task OpenDenyGrats(Guid correlationId, string triggerId)
+        {
+            var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == correlationId);
+            if (review == null)
+            {
+                TrackCorrelationId($"{nameof(OpenForwardReview)}: Review not found", correlationId);
+                return;
+            }
+
+            var modal = _denyGrats.Modal(review);
+            await _slackService.OpenModal(triggerId, modal);
         }
 
         public async Task OpenForwardReview(Guid correlationId, string triggerId)
@@ -142,7 +157,7 @@ namespace Gratify.Api.Services
             await _slackService.SendMessage(blocks);
         }
 
-        public async Task DenyGrats(Denial denial, ResponseMessage respondWith, string responseUrl)
+        public async Task DenyGrats(Denial denial)
         {
             var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == denial.CorrelationId);
             if (review == null)
@@ -150,8 +165,6 @@ namespace Gratify.Api.Services
                 TrackEntity($"{nameof(SubmitGratsForReview)}: Denial not found", denial);
                 return;
             }
-
-            await _slackService.ReplyToInteraction(responseUrl, respondWith);
 
             denial.Review = review;
             denial.TeamId = review.TeamId;

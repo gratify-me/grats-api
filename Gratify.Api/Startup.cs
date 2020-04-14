@@ -61,6 +61,7 @@ namespace Gratify.Api
 
             // Add modals
             services.AddTransient<AddTeamMember>();
+            services.AddTransient<DenyGrats>();
             services.AddTransient<ForwardGrats>();
             services.AddTransient<SendGrats>();
             services.AddTransient<ShowAppHome>();
