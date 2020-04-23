@@ -34,5 +34,12 @@ namespace Gratify.Api.Database
         public DbSet<User> Users { get; set; }
 
         public DbSet<Settings> Settings { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Settings>()
+                .HasIndex(b => b.TeamId)
+                .IsUnique();
+        }
     }
 }
