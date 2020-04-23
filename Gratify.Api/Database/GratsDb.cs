@@ -32,5 +32,7 @@ namespace Gratify.Api.Database
         public DbSet<Receival> Receivals { get; set; }
 
         public DbSet<User> Users { get; set; }
+
+        public DbSet<Settings> Settings { get; set; }
     }
 }

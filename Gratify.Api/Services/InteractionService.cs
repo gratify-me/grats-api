@@ -52,17 +52,18 @@ namespace Gratify.Api.Services
             await _database.AddAsync(draft);
             await _database.SaveChangesAsync();
 
-            var periodInDays = 30;
-            var approvedGratsLastPeriod = await _database.Approvals
+            var settings = await FindSettings(draft.TeamId, draft.Author);
+            // TODO: Include pending grats as well to avoid over-sending.
+            var approvedGratsLastPeriod = _database.Approvals
                 .Select(approval => approval.Review.Grats)
                 .Where(grats => grats.Draft.Author == draft.Author)
-                .Where(grats => grats.CreatedAt > DateTime.UtcNow.AddDays(-periodInDays))
-                .OrderByDescending(grats => grats.CreatedAt)
-                .FirstOrDefaultAsync();
+                .Where(grats => grats.CreatedAt > DateTime.UtcNow.AddDays(-settings.GratsPeriodInDays))
+                .OrderByDescending(grats => grats.CreatedAt);
 
-            if (approvedGratsLastPeriod != default)
+            if (await approvedGratsLastPeriod.CountAsync() >= settings.NumberOfGratsPerPeriod)
             {
-                var allGratsSpentModal = _allGratsSpent.Modal(draft.CorrelationId, approvedGratsLastPeriod.CreatedAt, periodInDays);
+                var lastApprovedGrats = await approvedGratsLastPeriod.FirstAsync();
+                var allGratsSpentModal = _allGratsSpent.Modal(draft.CorrelationId, lastApprovedGrats.CreatedAt, settings.GratsPeriodInDays);
                 await _slackService.OpenModal(triggerId, allGratsSpentModal);
             }
             else
@@ -86,14 +87,14 @@ namespace Gratify.Api.Services
         public async Task SubmitGratsForReview(Grats grats)
         {
             var draft = await _database.IncompleteDrafts.SingleOrDefaultAsync(draft => draft.CorrelationId == grats.CorrelationId);
-            if (draft == null)
+            if (draft == default)
             {
                 TrackEntity($"{nameof(SubmitGratsForReview)}: Draft not found", grats);
                 return;
             }
 
-            var reviewer = await GetReviewerFor(grats.Recipient, draft.TeamId);
-            if (reviewer == null)
+            var reviewer = await FindReviewerOrDefault(grats.Recipient, draft.TeamId);
+            if (reviewer == default)
             {
                 reviewer = draft.Author;
             }
@@ -118,7 +119,7 @@ namespace Gratify.Api.Services
         public async Task OpenDenyGrats(Guid correlationId, string triggerId)
         {
             var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == correlationId);
-            if (review == null)
+            if (review == default)
             {
                 TrackCorrelationId($"{nameof(OpenDenyGrats)}: Review not found", correlationId);
                 return;
@@ -131,7 +132,7 @@ namespace Gratify.Api.Services
         public async Task OpenForwardReview(Guid correlationId, string triggerId)
         {
             var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == correlationId);
-            if (review == null)
+            if (review == default)
             {
                 TrackCorrelationId($"{nameof(OpenForwardReview)}: Review not found", correlationId);
                 return;
@@ -144,7 +145,7 @@ namespace Gratify.Api.Services
         public async Task ForwardReview(Guid correlationId, string newReviewerId, bool? transferReviewResponsibility)
         {
             var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == correlationId);
-            if (review == null)
+            if (review == default)
             {
                 TrackCorrelationId($"{nameof(ForwardReview)}: Review not found", correlationId);
                 return;
@@ -168,7 +169,7 @@ namespace Gratify.Api.Services
         public async Task ApproveGrats(Approval approval, ResponseMessage respondWith, string responseUrl)
         {
             var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == approval.CorrelationId);
-            if (review == null)
+            if (review == default)
             {
                 TrackEntity($"{nameof(ApproveGrats)}: Approval not found", approval);
                 return;
@@ -190,7 +191,7 @@ namespace Gratify.Api.Services
         public async Task DenyGrats(Denial denial)
         {
             var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == denial.CorrelationId);
-            if (review == null)
+            if (review == default)
             {
                 TrackEntity($"{nameof(DenyGrats)}: Denial not found", denial);
                 return;
@@ -211,7 +212,7 @@ namespace Gratify.Api.Services
         public async Task AddTeamMember(string teamId, string userId, string teamMemberId)
         {
             var teamMember = await _database.Users.SingleOrDefaultAsync(user => user.UserId == teamMemberId);
-            if (teamMember == null)
+            if (teamMember == default)
             {
                 teamMember = new User(teamId, teamMemberId, defaultReviewer: userId);
                 await _database.Users.AddAsync(teamMember);
@@ -254,7 +255,7 @@ namespace Gratify.Api.Services
             await _slackService.SendMessage(blocks);
         }
 
-        private async Task<string> GetReviewerFor(string userId, string teamId)
+        private async Task<string> FindReviewerOrDefault(string userId, string teamId)
         {
             var defaultReviewer = await _database.Users
                 .AsNoTracking()
@@ -263,7 +264,7 @@ namespace Gratify.Api.Services
                 .Select(user => user.DefaultReviewer)
                 .SingleOrDefaultAsync();
 
-            if (defaultReviewer != null)
+            if (defaultReviewer != default)
             {
                 return defaultReviewer;
             }
@@ -293,6 +294,25 @@ namespace Gratify.Api.Services
             {
                 { "UserId", userId }
             });
+        }
+
+        private async Task<Settings> FindSettings(string teamId, string userId)
+        {
+            // TODO: Settings should probably be created on installation. In addition we might want to cache settings.
+            var maybeSettings = await _database.Settings.SingleOrDefaultAsync(settings => settings.TeamId == teamId);
+            if (maybeSettings != default)
+            {
+                return maybeSettings;
+            }
+
+            var defaultSettings = new Settings(
+                teamId: teamId,
+                createdAt: DateTime.UtcNow,
+                createdBy: userId);
+
+            await _database.AddAsync(defaultSettings);
+
+            return defaultSettings;
         }
     }
 }
