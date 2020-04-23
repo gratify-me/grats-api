@@ -7,7 +7,6 @@ using Slack.Client.BlockKit.BlockElements.Selects;
 using Slack.Client.BlockKit.CompositionObjects;
 using Slack.Client.BlockKit.LayoutBlocks;
 using Slack.Client.Interactions;
-using Slack.Client.Primitives;
 using Slack.Client.Views;
 
 namespace Gratify.Api.Modals
