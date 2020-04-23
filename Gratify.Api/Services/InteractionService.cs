@@ -92,7 +92,7 @@ namespace Gratify.Api.Services
                 return;
             }
 
-            var reviewer = await GetReviewerFor(draft.Author, draft.TeamId);
+            var reviewer = await GetReviewerFor(grats.Recipient, draft.TeamId);
             if (reviewer == null)
             {
                 reviewer = draft.Author;
