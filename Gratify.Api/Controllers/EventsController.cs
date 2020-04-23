@@ -23,15 +23,15 @@ namespace Gratify.Api.Controllers
                 UrlVerificationRequest request => Ok(new UrlVerificationResponse(request)),
                 EventCallback request => request.Event switch
                 {
-                    AppHomeOpened appHomeOpened => await ShowAppHome(appHomeOpened),
+                    AppHomeOpened appHomeOpened => await ShowAppHome(request.TeamId, appHomeOpened.User),
                     _ => Ok()
                 },
                 _ => Ok()
             };
 
-        private async Task<IActionResult> ShowAppHome(AppHomeOpened appHomeOpened)
+        private async Task<IActionResult> ShowAppHome(string teamId, string userId)
         {
-            await _interactions.ShowAppHome(appHomeOpened.User);
+            await _interactions.ShowAppHome(teamId, userId);
 
             return Ok();
         }

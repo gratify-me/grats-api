@@ -23,6 +23,7 @@ namespace Gratify.Api.Services
         private readonly DenyGrats _denyGrats;
         private readonly ForwardGrats _forwardGrats;
         private readonly GratsReceived _gratsReceived;
+        private readonly ChangeSettings _changeSettings;
         private readonly AddTeamMember _addTeamMember;
         private readonly ShowAppHome _showAppHome;
         private readonly RequestGratsReview _requestGratsReview;
@@ -42,6 +43,7 @@ namespace Gratify.Api.Services
             _denyGrats = new DenyGrats(this);
             _forwardGrats = new ForwardGrats(this);
             _gratsReceived = new GratsReceived(this);
+            _changeSettings = new ChangeSettings(this);
             _addTeamMember = new AddTeamMember(this);
             _showAppHome = new ShowAppHome(this, _database);
             _requestGratsReview = new RequestGratsReview(this);
@@ -203,6 +205,31 @@ namespace Gratify.Api.Services
             await _database.SaveChangesAsync();
         }
 
+        public async Task OpenChangeSettings(string triggerId, string teamId, string userId)
+        {
+            var settings = await FindSettings(teamId, userId);
+            var modal = _changeSettings.Modal(settings);
+            await _slackService.OpenModal(triggerId, modal);
+        }
+
+        public async Task ChangeSettings(string teamId, string userId, int gratsPeriodInDays, int numberOfGratsPerPeriod)
+        {
+            var settings = await _database.Settings.SingleOrDefaultAsync(setting => setting.TeamId == teamId);
+            if (settings == default)
+            {
+                TrackUserId($"{nameof(ChangeSettings)}: Settings not found", userId);
+                return;
+            }
+
+            settings.GratsPeriodInDays = gratsPeriodInDays;
+            settings.NumberOfGratsPerPeriod = numberOfGratsPerPeriod;
+            settings.UpdatedAt = DateTime.UtcNow;
+            settings.UpdatedBy = userId;
+
+            await _database.SaveChangesAsync();
+            await ShowAppHome(teamId, userId);
+        }
+
         public async Task OpenAddTeamMember(string triggerId)
         {
             var modal = _addTeamMember.Modal();
@@ -223,10 +250,10 @@ namespace Gratify.Api.Services
             }
 
             await _database.SaveChangesAsync();
-            await ShowAppHome(userId);
+            await ShowAppHome(teamId, userId);
         }
 
-        public async Task RemoveTeamMember(string userId, int teamMemberId)
+        public async Task RemoveTeamMember(string teamId, string userId, int teamMemberId)
         {
             var teamMember = await _database.Users.FindAsync(teamMemberId);
             if (teamMember == null)
@@ -237,13 +264,33 @@ namespace Gratify.Api.Services
 
             teamMember.DefaultReviewer = null;
             await _database.SaveChangesAsync();
-            await ShowAppHome(userId);
+            await ShowAppHome(teamId, userId);
         }
 
-        public async Task ShowAppHome(string userId)
+        public async Task ShowAppHome(string teamId, string userId)
         {
-            var homeBlocks = await _showAppHome.HomeTab(userId);
+            var homeBlocks = await _showAppHome.HomeTab(teamId, userId);
             await _slackService.PublishModal(userId, homeBlocks);
+        }
+
+        public async Task<Settings> FindSettings(string teamId, string userId)
+        {
+            // TODO: Settings should probably be created on installation. In addition we might want to cache settings.
+            var maybeSettings = await _database.Settings.SingleOrDefaultAsync(settings => settings.TeamId == teamId);
+            if (maybeSettings != default)
+            {
+                return maybeSettings;
+            }
+
+            var defaultSettings = new Settings(
+                teamId: teamId,
+                createdAt: DateTime.UtcNow,
+                createdBy: userId);
+
+            await _database.AddAsync(defaultSettings);
+            await _database.SaveChangesAsync();
+
+            return defaultSettings;
         }
 
         private async Task RequestReview(Review review)
@@ -294,25 +341,6 @@ namespace Gratify.Api.Services
             {
                 { "UserId", userId }
             });
-        }
-
-        private async Task<Settings> FindSettings(string teamId, string userId)
-        {
-            // TODO: Settings should probably be created on installation. In addition we might want to cache settings.
-            var maybeSettings = await _database.Settings.SingleOrDefaultAsync(settings => settings.TeamId == teamId);
-            if (maybeSettings != default)
-            {
-                return maybeSettings;
-            }
-
-            var defaultSettings = new Settings(
-                teamId: teamId,
-                createdAt: DateTime.UtcNow,
-                createdBy: userId);
-
-            await _database.AddAsync(defaultSettings);
-
-            return defaultSettings;
         }
     }
 }

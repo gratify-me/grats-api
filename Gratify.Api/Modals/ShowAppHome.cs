@@ -17,6 +17,7 @@ namespace Gratify.Api.Modals
         private readonly string _sendGrats = $"{typeof(ShowAppHome)}.SendGrats";
         private readonly string _addTeamMember = $"{typeof(ShowAppHome)}.AddTeamMember";
         private readonly string _removeTeamMember = $"{typeof(ShowAppHome)}.RemoveTeamMember";
+        private readonly string _changeSettings = $"{typeof(ShowAppHome)}.ChangeSettings";
         private readonly InteractionService _interactions;
         private readonly GratsDb _database;
 
@@ -26,7 +27,7 @@ namespace Gratify.Api.Modals
             _database = database;
         }
 
-        public async Task<HomeTab> HomeTab(string userId)
+        public async Task<HomeTab> HomeTab(string teamId, string userId)
         {
             var teamMemberUsers = await _database.Users
                 .Where(user => user.DefaultReviewer == userId)
@@ -35,6 +36,8 @@ namespace Gratify.Api.Modals
             var teamMembers = teamMemberUsers
                 .Select(user => TeamMemberSection(user))
                 .ToList();
+
+            var settingsSection = await SettingsSection(teamId, userId);
 
             var homeBlocks = new List<LayoutBlock>
             {
@@ -61,7 +64,10 @@ namespace Gratify.Api.Modals
 
             return new HomeTab
             {
-                Blocks = homeBlocks.Concat(teamMembers).ToArray(),
+                Blocks = homeBlocks
+                    .Concat(teamMembers)
+                    .Concat(settingsSection)
+                    .ToArray(),
             };
         }
 
@@ -74,7 +80,7 @@ namespace Gratify.Api.Modals
             else if (action.ActionId == _removeTeamMember)
             {
                 var memberUserId = int.Parse(action.Value);
-                await _interactions.RemoveTeamMember(userId, memberUserId);
+                await _interactions.RemoveTeamMember(teamId, userId, memberUserId);
             }
             else if (action.ActionId == _sendGrats)
             {
@@ -85,6 +91,10 @@ namespace Gratify.Api.Modals
                     author: userId);
 
                 await _interactions.SendGrats(draft, triggerId);
+            }
+            else if (action.ActionId == _changeSettings)
+            {
+                await _interactions.OpenChangeSettings(triggerId, teamId, userId);
             }
         }
 
@@ -97,5 +107,28 @@ namespace Gratify.Api.Modals
                     value: user.Id.ToString(),
                     text: ":heavy_multiplication_x:",
                     style: ButtonStyle.Danger));
+
+        private async Task<List<LayoutBlock>> SettingsSection(string teamId, string userId)
+        {
+            var settings = await _interactions.FindSettings(teamId, userId);
+
+            return new List<LayoutBlock>
+            {
+                new Section(
+                    id: "SettingsHeader",
+                    text: ":hammer_and_wrench: *Settings*",
+                    accessory: new Button(
+                        id: _changeSettings,
+                        value: userId,
+                        text: ":currency_exchange: Change Settings")),
+
+                new Divider(),
+
+                new Section(
+                    id: "SettingsContent",
+                    text: $"Grats period in days: *{settings.GratsPeriodInDays}*\n"
+                        + $"Number of Grats per period: *{settings.NumberOfGratsPerPeriod}*"),
+            };
+        }
     }
 }

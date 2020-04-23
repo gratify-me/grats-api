@@ -16,6 +16,14 @@ namespace Slack.Client.BlockKit.BlockElements.Selects
             Type = TypeName;
         }
 
+        public StaticSelect(string id, Option initialOption, Option[] options)
+        {
+            Type = TypeName;
+            ActionId = id;
+            InitialOption = initialOption;
+            Options = options;
+        }
+
         /// <summary>
         /// An array of option objects. Maximum number of options is 100. If option_groups is specified, this field should not be.
         /// </summary>
@@ -33,6 +41,12 @@ namespace Slack.Client.BlockKit.BlockElements.Selects
         /// This option will be selected when the menu initially loads.
         /// </summary>
         [JsonPropertyName("initial_option")]
-        public Option[] InitialOption { get; set; }
+        public Option InitialOption { get; set; }
+
+        /// <summary>
+        /// The selected option, as returned from Slack.
+        /// </summary>
+        [JsonPropertyName("selected_option")]
+        public Option SelectedOption { get; set; }
     }
 }
