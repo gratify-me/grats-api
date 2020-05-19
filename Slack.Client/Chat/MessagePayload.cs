@@ -18,7 +18,6 @@ namespace Slack.Client.Chat
         /// This field is not enforced as required when using blocks, however it is highly recommended that you include it as the aforementioned fallback.
         /// </summary>
         /// <example>Hello world!</example>
-        [Required]
         [JsonPropertyName("text")]
         public string Text { get; set; }
 

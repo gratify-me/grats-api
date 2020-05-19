@@ -78,6 +78,19 @@ namespace Gratify.Api.Services
             return await streamReader.ReadToEndAsync();
         }
 
+        public async Task<string> UpdateMessage(UpdateMessage message)
+        {
+            var url = $"{SlackApiUrl}/chat.update";
+            var json = JsonSerializer.Serialize(message, _options);
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            using var response = await _httpClient.PostAsync(url, content);
+            var contentStream = await response.Content.ReadAsStreamAsync();
+
+            using var streamReader = new StreamReader(contentStream);
+            return await streamReader.ReadToEndAsync();
+        }
+
         // https://api.slack.com/surfaces/modals/using
         public async Task<string> OpenModal(string triggerId, ViewPayload view)
         {
