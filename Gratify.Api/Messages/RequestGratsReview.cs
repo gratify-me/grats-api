@@ -129,7 +129,6 @@ namespace Gratify.Api.Messages
             new UpdateMessage(
                 text: WantsToSendGrats(review),
                 blocks: BaseBlocks(review)
-                    .Append(new Divider())
                     .Append(new Context(updates))
                     .ToArray(),
                 originalMessage: review.ReviewRequest);
