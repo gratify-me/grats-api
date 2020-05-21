@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using Slack.Client.BlockKit.LayoutBlocks;
 
 namespace Slack.Client.Chat
 {
@@ -10,6 +11,14 @@ namespace Slack.Client.Chat
     {
         public UpdateMessage()
         { }
+
+        public UpdateMessage(string text, LayoutBlock[] blocks, ApiResponse originalMessage)
+        {
+            Text = text;
+            Blocks = blocks;
+            Channel = originalMessage.Channel;
+            Timestamp = originalMessage.Timestamp;
+        }
 
         /// <summary>
         /// Channel containing the message to be updated.

@@ -21,6 +21,7 @@ namespace Gratify.Api.Controllers
         private readonly AllGratsSpent _allGratsSpent;
         private readonly DenyGrats _denyGrats;
         private readonly ForwardGrats _forwardGrats;
+        private readonly GratsReceived _gratsReceived;
         private readonly AddTeamMember _addTeamMember;
         private readonly ChangeSettings _changeSettings;
         private readonly RequestGratsReview _requestGratsReview;
@@ -31,6 +32,7 @@ namespace Gratify.Api.Controllers
             AllGratsSpent allGratsSpent,
             DenyGrats denyGrats,
             ForwardGrats forwardGrats,
+            GratsReceived gratsReceived,
             AddTeamMember addTeamMember,
             ChangeSettings changeSettings,
             RequestGratsReview requestGratsReview,
@@ -40,6 +42,7 @@ namespace Gratify.Api.Controllers
             _allGratsSpent = allGratsSpent;
             _denyGrats = denyGrats;
             _forwardGrats = forwardGrats;
+            _gratsReceived = gratsReceived;
             _addTeamMember = addTeamMember;
             _changeSettings = changeSettings;
             _requestGratsReview = requestGratsReview;
@@ -130,7 +133,11 @@ namespace Gratify.Api.Controllers
         {
             if (action.ActionId.Contains(typeof(RequestGratsReview).ToString()))
             {
-                await _requestGratsReview.OnSubmit(action, responseUrl, triggerId);
+                await _requestGratsReview.OnSubmit(action, triggerId);
+            }
+            else if (action.ActionId.Contains(typeof(GratsReceived).ToString()))
+            {
+                await _gratsReceived.OnSubmit(action, triggerId);
             }
             else if (action.ActionId.Contains(typeof(ShowAppHome).ToString()))
             {

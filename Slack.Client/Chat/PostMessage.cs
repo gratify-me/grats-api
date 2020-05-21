@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Slack.Client.BlockKit.LayoutBlocks;
+using Slack.Client.Primitives;
 
 namespace Slack.Client.Chat
 {
@@ -17,6 +18,13 @@ namespace Slack.Client.Chat
         {
             Text = text;
             Blocks = blocks;
+        }
+
+        public PostMessage(string text, LayoutBlock[] blocks, Channel channel)
+        {
+            Text = text;
+            Blocks = blocks;
+            Channel = channel.Id;
         }
 
         /// <summary>

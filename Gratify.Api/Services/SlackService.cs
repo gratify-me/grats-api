@@ -65,7 +65,7 @@ namespace Gratify.Api.Services
             return openResponse.Channel;
         }
 
-        public async Task<string> SendMessage(PostMessage message)
+        public async Task<ApiResponse> SendMessage(PostMessage message)
         {
             var url = $"{SlackApiUrl}/chat.postMessage";
             var json = JsonSerializer.Serialize(message, _options);
@@ -74,11 +74,10 @@ namespace Gratify.Api.Services
             using var response = await _httpClient.PostAsync(url, content);
             var contentStream = await response.Content.ReadAsStreamAsync();
 
-            using var streamReader = new StreamReader(contentStream);
-            return await streamReader.ReadToEndAsync();
+            return await JsonSerializer.DeserializeAsync<ApiResponse>(contentStream);
         }
 
-        public async Task<string> UpdateMessage(UpdateMessage message)
+        public async Task<ApiResponse> UpdateMessage(UpdateMessage message)
         {
             var url = $"{SlackApiUrl}/chat.update";
             var json = JsonSerializer.Serialize(message, _options);
@@ -87,8 +86,7 @@ namespace Gratify.Api.Services
             using var response = await _httpClient.PostAsync(url, content);
             var contentStream = await response.Content.ReadAsStreamAsync();
 
-            using var streamReader = new StreamReader(contentStream);
-            return await streamReader.ReadToEndAsync();
+            return await JsonSerializer.DeserializeAsync<ApiResponse>(contentStream);
         }
 
         // https://api.slack.com/surfaces/modals/using

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using Slack.Client.BlockKit.CompositionObjects;
 
 namespace Slack.Client.BlockKit.LayoutBlocks
 {
@@ -14,6 +15,12 @@ namespace Slack.Client.BlockKit.LayoutBlocks
             Type = TypeName;
         }
 
+        public Context(MrkdwnText[] elements)
+        {
+            Type = TypeName;
+            Elements = elements;
+        }
+
         public const string TypeName = "context";
 
         /// <summary>
@@ -21,6 +28,6 @@ namespace Slack.Client.BlockKit.LayoutBlocks
         /// </summary>
         [Required]
         [JsonPropertyName("elements")]
-        public object[] Elements { get; set; }
+        public MrkdwnText[] Elements { get; set; } // TODO: Currently fixing this to MrkdwnText, since that's the only type we're using.
     }
 }

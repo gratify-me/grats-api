@@ -1,27 +1,22 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using Slack.Client.Chat;
 
 namespace Gratify.Api.Database.Entities
 {
     public class Review : Entity
     {
-        public Review(Guid correlationId, DateTime requestedAt, string reviewer)
-        {
-            CorrelationId = correlationId;
-            RequestedAt = requestedAt;
-            Reviewer = reviewer;
-            IsForwarded = false;
-        }
+        public Review()
+        { }
 
-        public Review(Guid correlationId, DateTime requestedAt, string reviewer, Grats grats, string teamId, int forwardedFrom)
+        public Review(Guid correlationId, DateTime requestedAt, string reviewer, ApiResponse authorNotification)
         {
             CorrelationId = correlationId;
             RequestedAt = requestedAt;
             Reviewer = reviewer;
+            AuthorNotificationChannel = authorNotification.Channel;
+            AuthorNotificationTimestamp = authorNotification.Timestamp;
             IsForwarded = false;
-            Grats = grats;
-            TeamId = teamId;
-            ForwardedFrom = forwardedFrom;
         }
 
         [Required]
@@ -43,6 +38,18 @@ namespace Gratify.Api.Database.Entities
         [Required]
         public Grats Grats { get; set; }
 
+        [Required]
+        public string AuthorNotificationChannel { get; set; }
+
+        [Required]
+        public string AuthorNotificationTimestamp { get; set; }
+
+        [Required]
+        public string ReviewRequestChannel { get; set; }
+
+        [Required]
+        public string ReviewRequestTimestamp { get; set; }
+
         public Approval Approval { get; set; }
 
         public Denial Denial { get; set; }
@@ -51,13 +58,35 @@ namespace Gratify.Api.Database.Entities
         {
             IsForwarded = true;
 
-            return new Review(
-                correlationId: CorrelationId,
-                requestedAt: DateTime.UtcNow,
-                reviewer: newReviewerId,
-                grats: Grats,
-                teamId: TeamId,
-                forwardedFrom: Id);
+            return new Review
+            {
+                CorrelationId = CorrelationId,
+                RequestedAt = DateTime.UtcNow,
+                Reviewer = newReviewerId,
+                Grats = Grats,
+                AuthorNotificationChannel = AuthorNotificationChannel,
+                AuthorNotificationTimestamp = AuthorNotificationTimestamp,
+                TeamId = TeamId,
+                ForwardedFrom = Id
+            };
+        }
+
+        public ApiResponse AuthorNotification => new ApiResponse
+        {
+            Channel = AuthorNotificationChannel,
+            Timestamp = AuthorNotificationTimestamp,
+        };
+
+        public ApiResponse ReviewRequest => new ApiResponse
+        {
+            Channel = ReviewRequestChannel,
+            Timestamp = ReviewRequestTimestamp,
+        };
+
+        public void SetReviewRequest(ApiResponse reviewRequest)
+        {
+            ReviewRequestChannel = reviewRequest.Channel;
+            ReviewRequestTimestamp = reviewRequest.Timestamp;
         }
     }
 }

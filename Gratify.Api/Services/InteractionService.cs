@@ -8,7 +8,6 @@ using Gratify.Api.Messages;
 using Gratify.Api.Modals;
 using Microsoft.ApplicationInsights;
 using Microsoft.EntityFrameworkCore;
-using Slack.Client.Chat;
 using Slack.Client.Views;
 
 namespace Gratify.Api.Services
@@ -26,6 +25,7 @@ namespace Gratify.Api.Services
         private readonly ChangeSettings _changeSettings;
         private readonly AddTeamMember _addTeamMember;
         private readonly ShowAppHome _showAppHome;
+        private readonly NotifyGratsSent _notifyGratsSent;
         private readonly RequestGratsReview _requestGratsReview;
 
         public InteractionService(
@@ -46,7 +46,8 @@ namespace Gratify.Api.Services
             _changeSettings = new ChangeSettings(this);
             _addTeamMember = new AddTeamMember(this);
             _showAppHome = new ShowAppHome(this, _database);
-            _requestGratsReview = new RequestGratsReview(this);
+            _notifyGratsSent = new NotifyGratsSent(_slackService);
+            _requestGratsReview = new RequestGratsReview(this, _slackService);
         }
 
         public async Task SendGrats(Draft draft, string triggerId, string userId = null)
@@ -95,6 +96,12 @@ namespace Gratify.Api.Services
                 return;
             }
 
+            grats.Draft = draft;
+            grats.TeamId = draft.TeamId;
+            await _database.AddAsync(grats);
+
+            var notifyAuthor = await _notifyGratsSent.Message(grats);
+            var authorNotification = await _slackService.SendMessage(notifyAuthor);
             var reviewer = await FindReviewerOrDefault(grats.Recipient, draft.TeamId);
             if (reviewer == default)
             {
@@ -104,18 +111,20 @@ namespace Gratify.Api.Services
             var review = new Review(
                 correlationId: grats.CorrelationId,
                 requestedAt: DateTime.UtcNow,
-                reviewer: reviewer);
-
-            grats.Draft = draft;
-            grats.TeamId = draft.TeamId;
-            await _database.AddAsync(grats);
+                reviewer: reviewer,
+                authorNotification: authorNotification);
 
             review.Grats = grats;
             review.TeamId = draft.TeamId;
+
+            var reviewMessage = await _requestGratsReview.Message(review);
+            review.SetReviewRequest(await _slackService.SendMessage(reviewMessage));
+
             await _database.AddAsync(review);
             await _database.SaveChangesAsync();
 
-            await RequestReview(review);
+            var notifyAuthorPending = _notifyGratsSent.UpdatePendingApproval(review);
+            await _slackService.UpdateMessage(notifyAuthorPending);
         }
 
         public async Task OpenDenyGrats(Guid correlationId, string triggerId)
@@ -146,8 +155,8 @@ namespace Gratify.Api.Services
 
         public async Task ForwardReview(Guid correlationId, string newReviewerId, bool? transferReviewResponsibility)
         {
-            var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == correlationId);
-            if (review == default)
+            var oldReview = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == correlationId);
+            if (oldReview == default)
             {
                 TrackCorrelationId($"{nameof(ForwardReview)}: Review not found", correlationId);
                 return;
@@ -161,14 +170,21 @@ namespace Gratify.Api.Services
                 user.DefaultReviewer = newReviewerId;
             }
 
-            var newReview = review.ForwardTo(newReviewerId);
+            var newReview = oldReview.ForwardTo(newReviewerId);
+            var reviewMessage = await _requestGratsReview.Message(newReview);
+            newReview.SetReviewRequest(await _slackService.SendMessage(reviewMessage));
+
             await _database.AddAsync(newReview);
             await _database.SaveChangesAsync();
 
-            await RequestReview(newReview);
+            var notifyOldReviewer = _requestGratsReview.UpdateForwarded(oldReview, newReview);
+            await _slackService.UpdateMessage(notifyOldReviewer);
+
+            var notifyAuthor = _notifyGratsSent.UpdateForwarded(newReview);
+            await _slackService.UpdateMessage(notifyAuthor);
         }
 
-        public async Task ApproveGrats(Approval approval, ResponseMessage respondWith, string responseUrl)
+        public async Task ApproveGrats(Approval approval)
         {
             var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == approval.CorrelationId);
             if (review == default)
@@ -176,8 +192,6 @@ namespace Gratify.Api.Services
                 TrackEntity($"{nameof(ApproveGrats)}: Approval not found", approval);
                 return;
             }
-
-            await _slackService.ReplyToInteraction(responseUrl, respondWith);
 
             approval.Review = review;
             approval.TeamId = review.TeamId;
@@ -188,6 +202,12 @@ namespace Gratify.Api.Services
             var channel = await _slackService.GetAppChannel(review.Grats.Recipient);
             blocks.Channel = channel.Id;
             await _slackService.SendMessage(blocks);
+
+            var notifyReviewer = _requestGratsReview.UpdateApproved(approval);
+            await _slackService.UpdateMessage(notifyReviewer);
+
+            var notifyAuthor = _notifyGratsSent.UpdateApproved(approval);
+            await _slackService.UpdateMessage(notifyAuthor);
         }
 
         public async Task DenyGrats(Denial denial)
@@ -203,6 +223,41 @@ namespace Gratify.Api.Services
             denial.TeamId = review.TeamId;
             await _database.AddAsync(denial);
             await _database.SaveChangesAsync();
+
+            var notifyReviewer = _requestGratsReview.UpdateDenied(denial);
+            await _slackService.UpdateMessage(notifyReviewer);
+
+            var notifyAuthor = _notifyGratsSent.UpdateDenied(denial);
+            await _slackService.UpdateMessage(notifyAuthor);
+        }
+
+        public async Task ChangeAccountDetails(Receival receival)
+        {
+            var approval = await _database.Approvals
+                .Include(approval => approval.Review)
+                    .ThenInclude(review => review.Grats)
+                        .ThenInclude(grats => grats.Draft)
+                .SingleOrDefaultAsync(approval => approval.CorrelationId == receival.CorrelationId);
+
+            if (approval == default)
+            {
+                TrackEntity($"{nameof(ChangeAccountDetails)}: Approval not found", approval);
+                return;
+            }
+
+            receival.Approval = approval;
+            receival.TeamId = approval.TeamId;
+
+            var notifyReviewer = _requestGratsReview.UpdateReceived(receival);
+            await _slackService.UpdateMessage(notifyReviewer);
+
+            var notifyAuthor = _notifyGratsSent.UpdateReceived(receival);
+            await _slackService.UpdateMessage(notifyAuthor);
+        }
+
+        public async Task TransferToAccount(Receival receival)
+        {
+            await ChangeAccountDetails(receival);
         }
 
         public async Task OpenChangeSettings(string triggerId, string teamId, string userId)
@@ -291,15 +346,6 @@ namespace Gratify.Api.Services
             await _database.SaveChangesAsync();
 
             return defaultSettings;
-        }
-
-        private async Task RequestReview(Review review)
-        {
-            var requestGratsReview = _requestGratsReview;
-            var blocks = requestGratsReview.Message(review);
-            var channel = await _slackService.GetAppChannel(review.Reviewer);
-            blocks.Channel = channel.Id;
-            await _slackService.SendMessage(blocks);
         }
 
         private async Task<string> FindReviewerOrDefault(string userId, string teamId)
