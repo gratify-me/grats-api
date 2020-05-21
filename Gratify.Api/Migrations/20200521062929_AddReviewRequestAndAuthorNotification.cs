@@ -10,25 +10,25 @@ namespace Gratify.Api.Migrations
                 name: "AuthorNotificationChannel",
                 table: "Reviews",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: string.Empty);
 
             migrationBuilder.AddColumn<string>(
                 name: "AuthorNotificationTimestamp",
                 table: "Reviews",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: string.Empty);
 
             migrationBuilder.AddColumn<string>(
                 name: "ReviewRequestChannel",
                 table: "Reviews",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: string.Empty);
 
             migrationBuilder.AddColumn<string>(
                 name: "ReviewRequestTimestamp",
                 table: "Reviews",
                 nullable: false,
-                defaultValue: "");
+                defaultValue: string.Empty);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
