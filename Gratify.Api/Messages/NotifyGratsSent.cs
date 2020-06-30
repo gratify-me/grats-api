@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Gratify.Api.Database.Entities;
-using Gratify.Api.Services;
+using Slack.Client;
 using Slack.Client.BlockKit.CompositionObjects;
 using Slack.Client.BlockKit.LayoutBlocks;
 using Slack.Client.Chat;

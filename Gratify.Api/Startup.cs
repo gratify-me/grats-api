@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OpenApi.Models;
+using Slack.Client;
 using Slack.Client.Chat.Converters;
 using Slack.Client.Events.Converters;
 using Slack.Client.Views.Converters;
@@ -61,6 +62,7 @@ namespace Gratify.Api
 
             // Add messages
             services.AddTransient<GratsReceived>();
+            services.AddTransient<NotifyGratsSent>();
             services.AddTransient<RequestGratsReview>();
 
             // Add modals
@@ -71,6 +73,12 @@ namespace Gratify.Api
             services.AddTransient<SendGrats>();
             services.AddTransient<AllGratsSpent>();
             services.AddTransient<ShowAppHome>();
+
+            // Add services
+            services.AddHostedService<SubmitGratsForReview>();
+            services.AddHostedService<NotifyGratsApproved>();
+            services.AddHostedService<NotifyGratsDenied>();
+            services.AddHostedService<NotifyReviewForwarded>();
         }
 
         public void Configure(IApplicationBuilder application, IWebHostEnvironment environment)

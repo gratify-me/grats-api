@@ -14,7 +14,7 @@ namespace Gratify.Api.Messages
         private readonly string _changeAccountDetails = $"{typeof(GratsReceived)}.ChangeAccountDetails";
         private readonly InteractionService _interactions;
 
-        public GratsReceived(InteractionService interactions)
+        public GratsReceived(InteractionService interactions = default)
         {
             _interactions = interactions;
         }

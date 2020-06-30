@@ -11,7 +11,7 @@ using Slack.Client.Primitives;
 using Slack.Client.Views;
 using Slack.Client.Views.Converters;
 
-namespace Gratify.Api.Services
+namespace Slack.Client
 {
     public class SlackService
     {

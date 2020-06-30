@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Gratify.Api.Database.Entities;
 using Gratify.Api.Services;
+using Slack.Client;
 using Slack.Client.BlockKit.BlockElements;
 using Slack.Client.BlockKit.CompositionObjects;
 using Slack.Client.BlockKit.LayoutBlocks;
@@ -18,6 +19,11 @@ namespace Gratify.Api.Messages
         private readonly string _forward = $"{typeof(RequestGratsReview)}.Forward";
         private readonly InteractionService _interactions;
         private readonly SlackService _slackService;
+
+        public RequestGratsReview(SlackService slackService)
+        {
+            _slackService = slackService;
+        }
 
         public RequestGratsReview(InteractionService interactions, SlackService slackService)
         {
