@@ -19,5 +19,8 @@ namespace Gratify.Api.Database.Entities
 
         [Required]
         public Review Review { get; set; }
+
+        [Required]
+        public bool IsNotified { get; set; }
     }
 }

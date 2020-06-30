@@ -33,6 +33,9 @@ namespace Gratify.Api.Database.Entities
         public bool IsForwarded { get; private set; }
 
         [Required]
+        public bool IsNotified { get; set; }
+
+        [Required]
         public int GratsId { get; set; }
 
         [Required]
