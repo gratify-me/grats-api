@@ -1,4 +1,6 @@
+using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Gratify.Api.Database.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -34,6 +36,26 @@ namespace Gratify.Api.Database
         public DbSet<User> Users { get; set; }
 
         public DbSet<Settings> Settings { get; set; }
+
+        public async Task<Settings> SettingsFor(string teamId, string userId)
+        {
+            // TODO: Settings should probably be created on installation. In addition we might want to cache settings.
+            var maybeSettings = await Settings.SingleOrDefaultAsync(settings => settings.TeamId == teamId);
+            if (maybeSettings != default)
+            {
+                return maybeSettings;
+            }
+
+            var defaultSettings = new Settings(
+                teamId: teamId,
+                createdAt: DateTime.UtcNow,
+                createdBy: userId);
+
+            await Settings.AddAsync(defaultSettings);
+            await SaveChangesAsync();
+
+            return defaultSettings;
+        }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
