@@ -1,6 +1,4 @@
-﻿using System.Text.Json.Serialization;
-
-namespace Slack.Client.Views
+﻿namespace Slack.Client.Views
 {
     /// <summary>
     /// The Home tab is a persistent, yet dynamic interface for apps.
