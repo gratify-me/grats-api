@@ -68,7 +68,7 @@ namespace Gratify.Api.Components.HomeTabs
         {
             if (action.ActionId == _openAddTeamMember)
             {
-                await OpenAddTeamMember(triggerId);
+                await OpenAddTeamMember(triggerId, teamId, userId);
             }
             else if (action.ActionId == _removeTeamMember)
             {
@@ -91,9 +91,12 @@ namespace Gratify.Api.Components.HomeTabs
             await _slackService.PublishModal(userId, homeBlocks);
         }
 
-        private async Task OpenAddTeamMember(string triggerId)
+        private async Task OpenAddTeamMember(string triggerId, string teamId, string userId)
         {
-            var modal = _components.AddTeamMember.Modal();
+            var user = await _database.Users.SingleOrDefaultAsync(user => user.UserId == userId);
+            user ??= new User(teamId, userId);
+
+            var modal = _components.AddTeamMember.Modal(user);
             await _slackService.OpenModal(triggerId, modal);
         }
 

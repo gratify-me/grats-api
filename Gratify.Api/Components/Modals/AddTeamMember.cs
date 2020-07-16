@@ -1,10 +1,14 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Gratify.Api.Database;
 using Microsoft.ApplicationInsights;
 using Microsoft.EntityFrameworkCore;
 using Slack.Client;
+using Slack.Client.BlockKit.BlockElements;
 using Slack.Client.BlockKit.BlockElements.Selects;
+using Slack.Client.BlockKit.CompositionObjects;
 using Slack.Client.BlockKit.LayoutBlocks;
 using Slack.Client.Interactions;
 using Slack.Client.Views;
@@ -28,50 +32,68 @@ namespace Gratify.Api.Components.Modals
             _components = components;
         }
 
-        public Modal Modal() =>
-            new Modal(
+        public Modal Modal(DbUser user)
+        {
+            var blocks = new List<LayoutBlock>
+            {
+                new Input(
+                    id: "InputNewTeamMember",
+                    label: ":heavy_plus_sign: Who should we add to your team?",
+                    element: new UsersSelect(
+                        id: "NewTeamMember",
+                        placeholder: "Select a user")),
+            };
+
+            if (user.IsAdministrator)
+            {
+                blocks.Add(new Input(
+                    id: "InputUserIsManager",
+                    label: "Is user manager?",
+                    element: new CheckboxGroup(
+                        id: "UserIsManager",
+                        options: new Option[] { Option.Yes }),
+                    optional: true));
+            }
+
+            return new Modal(
                 id: typeof(AddTeamMember),
                 correlationId: Guid.NewGuid(),
                 title: "New member",
                 submit: "Add member",
                 close: "Cancel",
-                blocks: new LayoutBlock[]
-                {
-                    new Input(
-                        id: "SelectUser",
-                        label: ":heavy_plus_sign: Who should we add to your team?",
-                        element: new UsersSelect(
-                            id: "NewTeamMemeber",
-                            placeholder: "Select a user")),
-                });
+                blocks: blocks.ToArray());
+        }
 
         public async Task<ResponseAction> OnSubmit(ViewSubmission submission)
         {
-            var newTeamMember = submission.GetStateValue<UsersSelect>("SelectUser.NewTeamMemeber");
+            var newTeamMember = submission.GetStateValue<UsersSelect>("InputNewTeamMember.NewTeamMember");
             if (newTeamMember.SelectedUser == User.Slackbot)
             {
                 return new ResponseActionErrors("SelectReceiver", "Slackbot is not a valid user");
             }
 
+            var transferResponsibility = submission.GetStateValue<CheckboxGroup>("InputUserIsManager.UserIsManager");
             await SaveNewTeamMember(
                 teamId: submission.Team.Id,
                 userId: submission.User.Id,
-                teamMemberId: newTeamMember.SelectedUserId);
+                teamMemberId: newTeamMember.SelectedUserId,
+                hasReports: transferResponsibility.SelectedOptions?.Any(option => option == Option.Yes) ?? false);
 
             return new ResponseActionClose();
         }
 
-        private async Task SaveNewTeamMember(string teamId, string userId, string teamMemberId)
+        private async Task SaveNewTeamMember(string teamId, string userId, string teamMemberId, bool hasReports)
         {
             var teamMember = await _database.Users.SingleOrDefaultAsync(user => user.UserId == teamMemberId);
             if (teamMember == default)
             {
-                teamMember = new DbUser(teamId, teamMemberId, defaultReviewer: userId);
+                teamMember = new DbUser(teamId, teamMemberId, defaultReviewer: userId, hasReports: hasReports);
                 await _database.Users.AddAsync(teamMember);
             }
             else
             {
                 teamMember.DefaultReviewer = userId;
+                teamMember.HasReports = hasReports;
             }
 
             await _database.SaveChangesAsync();
