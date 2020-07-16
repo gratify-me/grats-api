@@ -89,11 +89,7 @@ namespace Gratify.Api.Components.Messages
         {
             if (action.ActionId == _approve)
             {
-                var approval = new Approval(
-                    correlationId: action.CorrelationId,
-                    approvedAt: System.DateTime.UtcNow);
-
-                await ApproveGrats(approval);
+                await ApproveGrats(action.CorrelationId);
             }
             else if (action.ActionId == _deny)
             {
@@ -143,8 +139,12 @@ namespace Gratify.Api.Components.Messages
 
         private string WantsToSendGrats(Review review) => $"<@{review.Grats.Author}> wants to send grats to <@{review.Grats.Recipient}>!";
 
-        private async Task ApproveGrats(Approval approval)
+        private async Task ApproveGrats(Guid correlationId)
         {
+            var approval = new Approval(
+                correlationId: correlationId,
+                approvedAt: DateTime.UtcNow);
+
             var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == approval.CorrelationId);
             if (review == default)
             {

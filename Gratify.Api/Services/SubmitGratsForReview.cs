@@ -52,6 +52,7 @@ namespace Gratify.Api.Services
         {
             var notifyAuthor = await component.NotifyGratsSent.Message(grats);
             var authorNotification = await _slackService.SendMessage(notifyAuthor);
+
             var reviewer = await FindReviewerOrDefault(database, grats.Recipient, grats.TeamId);
             if (reviewer == default)
             {

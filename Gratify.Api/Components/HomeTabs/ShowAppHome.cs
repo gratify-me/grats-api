@@ -34,43 +34,31 @@ namespace Gratify.Api.Components.HomeTabs
 
         public async Task<HomeTab> HomeTab(string teamId, string userId)
         {
-            var teamMemberUsers = await _database.Users
-                .Where(user => user.DefaultReviewer == userId)
-                .ToArrayAsync();
+            var user = await _database.Users.SingleOrDefaultAsync(user => user.UserId == userId);
+            user ??= new User(teamId, userId);
 
-            var teamMembers = teamMemberUsers
-                .Select(user => TeamMemberSection(user))
-                .ToList();
-
-            var settingsSection = await SettingsSection(teamId, userId);
-
-            var homeBlocks = new List<LayoutBlock>
-            {
-                new Actions(
-                    id: "HomeActions",
-                    elements: new BlockElement[]
-                    {
-                        new Button(
-                            id: _openSendGrats,
-                            value: userId,
-                            text: ":grats: Send Grats")
-                    }),
-
-                new Section(
-                    id: "YourTeam",
-                    text: ":rocket: *Your team*",
-                    accessory: new Button(
-                        id: _openAddTeamMember,
+            var yourTeamSection = YourTeamSection(user);
+            var teamReviewerSection = TeamReviewerSection(user);
+            var teamMembersSection = await TeamMembersSection(user);
+            var settingsSection = await SettingsSection(user);
+            var homeActions = new Actions(
+                id: "HomeActions",
+                elements: new BlockElement[]
+                {
+                    new Button(
+                        id: _openSendGrats,
                         value: userId,
-                        text: ":heavy_plus_sign: New member")),
-
-                new Divider(),
-            };
+                        text: ":grats: Send Grats")
+                });
 
             return new HomeTab
             {
-                Blocks = homeBlocks
-                    .Concat(teamMembers)
+                Blocks = new List<LayoutBlock>()
+                    .Append(homeActions)
+                    .Append(yourTeamSection)
+                    .Append(new Divider())
+                    .Append(teamReviewerSection)
+                    .Concat(teamMembersSection)
                     .Concat(settingsSection)
                     .ToArray(),
             };
@@ -130,29 +118,101 @@ namespace Gratify.Api.Components.HomeTabs
             await _slackService.OpenModal(triggerId, modal);
         }
 
-        private Section TeamMemberSection(User user) =>
-            new Section(
-                id: user.UserId,
-                text: $"*<@{user.UserId}>*",
-                accessory: new Button(
-                    id: _removeTeamMember,
-                    value: user.Id.ToString(),
-                    text: ":heavy_multiplication_x:",
-                    style: ButtonStyle.Danger));
-
-        private async Task<List<LayoutBlock>> SettingsSection(string teamId, string userId)
+        private Section YourTeamSection(User user)
         {
-            var settings = await _database.SettingsFor(teamId, userId);
+            if (user.IsAdministrator || user.HasReports)
+            {
+                return new Section(
+                    id: "YourTeam",
+                    text: ":rocket: *Your team*",
+                    accessory: new Button(
+                        id: _openAddTeamMember,
+                        value: user.UserId,
+                        text: ":heavy_plus_sign: New member"));
+            }
+
+            return new Section(
+                id: "YourTeam",
+                text: ":rocket: *Your team*");
+        }
+
+        private Section TeamReviewerSection(User currentUser)
+        {
+            if (currentUser.IsAdministrator)
+            {
+                // TODO: Administrators should be able to browse different teams, so this will change.
+                return new Section(
+                    id: currentUser.UserId,
+                    text: $"*<@{currentUser.UserId}>* _administrator_");
+            }
+            else if (currentUser.HasReports)
+            {
+                return new Section(
+                    id: currentUser.UserId,
+                    text: $"*<@{currentUser.UserId}>* _reviewer_");
+            }
+            else if (currentUser.DefaultReviewer != null)
+            {
+                return new Section(
+                    id: currentUser.DefaultReviewer,
+                    text: $"*<@{currentUser.DefaultReviewer}>* _reviewer_");
+            }
+
+            return new Section(
+                id: currentUser.UserId,
+                text: $"*<@{currentUser.UserId}>* _not in any team_");
+        }
+
+        private async Task<List<Section>> TeamMembersSection(User currentUser)
+        {
+            var teamMembers = await TeamMembersFor(currentUser);
+
+            return teamMembers
+                .Select(user => TeamMemberSection(currentUser, user))
+                .ToList();
+        }
+
+        private async Task<User[]> TeamMembersFor(User currentUser)
+        {
+            if (currentUser.IsAdministrator || currentUser.HasReports)
+            {
+                return await _database.Users
+                    .Where(user => user.DefaultReviewer == currentUser.UserId)
+                    .ToArrayAsync();
+            }
+
+            return await _database.Users
+                .Where(user => user.DefaultReviewer != null)
+                .Where(user => user.DefaultReviewer == currentUser.DefaultReviewer)
+                .ToArrayAsync();
+        }
+
+        private Section TeamMemberSection(User currentUser, User user)
+        {
+            if (currentUser.IsAdministrator || currentUser.HasReports)
+            {
+                return new Section(
+                    id: user.UserId,
+                    text: $"*<@{user.UserId}>*",
+                    accessory: new Button(
+                        id: _removeTeamMember,
+                        value: user.Id.ToString(),
+                        text: ":heavy_multiplication_x:",
+                        style: ButtonStyle.Danger));
+            }
+
+            return new Section(
+                id: user.UserId,
+                text: $"*<@{user.UserId}>*");
+        }
+
+        private async Task<List<LayoutBlock>> SettingsSection(User currentUser)
+        {
+            var settings = await _database.SettingsFor(currentUser.TeamId, currentUser.UserId);
 
             return new List<LayoutBlock>
             {
-                new Section(
-                    id: "SettingsHeader",
-                    text: ":hammer_and_wrench: *Settings*",
-                    accessory: new Button(
-                        id: _openChangeSettings,
-                        value: userId,
-                        text: ":currency_exchange: Change Settings")),
+                SettingsHeaderSection(currentUser),
 
                 new Divider(),
 
@@ -161,6 +221,24 @@ namespace Gratify.Api.Components.HomeTabs
                     text: $"Grats period in days: *{settings.GratsPeriodInDays}*\n"
                         + $"Number of Grats per period: *{settings.NumberOfGratsPerPeriod}*"),
             };
+        }
+
+        private Section SettingsHeaderSection(User currentUser)
+        {
+            if (currentUser.IsAdministrator)
+            {
+                return new Section(
+                    id: "SettingsHeader",
+                    text: ":hammer_and_wrench: *Settings*",
+                    accessory: new Button(
+                        id: _openChangeSettings,
+                        value: currentUser.UserId,
+                        text: ":currency_exchange: Change Settings"));
+            }
+
+            return new Section(
+                id: "SettingsHeader",
+                text: ":hammer_and_wrench: *Settings*");
         }
     }
 }

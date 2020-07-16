@@ -21,5 +21,8 @@ namespace Gratify.Api.Database.Entities
 
         [Required]
         public bool HasReports { get; set; }
+
+        [Required]
+        public bool IsAdministrator => UserId == "UN4H54SDD" || UserId == "UMPTPPJ1G";
     }
 }
