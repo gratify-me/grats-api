@@ -96,7 +96,7 @@ namespace Gratify.Api.Services
             return await database.Users
                 .AsNoTracking()
                 .Where(user => user.TeamId == teamId)
-                .Where(user => user.HasReports)
+                .Where(user => user.HasReports || user.IsAdministrator)
                 .Select(user => user.UserId)
                 .SingleOrDefaultAsync();
         }

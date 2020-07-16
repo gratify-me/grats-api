@@ -58,9 +58,10 @@ namespace Gratify.Api.Components.Modals
         public async Task<ResponseAction> OnSubmit(ViewSubmission submission)
         {
             var newReviewer = submission.GetStateValue<UsersSelect>("InputReviewer.Reviewer");
-            if (newReviewer.SelectedUser == Slack.Client.Primitives.User.Slackbot)
+            var user = await _database.Users.SingleOrDefaultAsync(user => user.UserId == newReviewer.SelectedUserId);
+            if (user == null || (!user.HasReports && !user.IsAdministrator))
             {
-                return new ResponseActionErrors("SelectReceiver", "Slackbot is not a valid user");
+                return new ResponseActionErrors("InputReviewer", "This person is not a manager or administrator, and cannot review Grats");
             }
 
             var transferResponsibility = submission.GetStateValue<CheckboxGroup>("InputTransferReviewResponsibility.TransferReviewResponsibility");
@@ -72,7 +73,7 @@ namespace Gratify.Api.Components.Modals
             return new ResponseActionClose();
         }
 
-        public async Task ForwardReviewTo(Guid correlationId, string newReviewerId, bool? transferReviewResponsibility)
+        private async Task ForwardReviewTo(Guid correlationId, string newReviewerId, bool? transferReviewResponsibility)
         {
             var oldReview = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == correlationId);
             if (oldReview == default)

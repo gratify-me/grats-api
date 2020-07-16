@@ -72,12 +72,13 @@ namespace Gratify.Api.Components.Modals
                 return new ResponseActionErrors("SelectReceiver", "Slackbot is not a valid user");
             }
 
-            var transferResponsibility = submission.GetStateValue<CheckboxGroup>("InputUserIsManager.UserIsManager");
+            var userIsManager = submission.GetStateValue<CheckboxGroup>("InputUserIsManager.UserIsManager");
+            var userHasReports = userIsManager?.SelectedOptions?.Any(option => option == Option.Yes);
             await SaveNewTeamMember(
                 teamId: submission.Team.Id,
                 userId: submission.User.Id,
                 teamMemberId: newTeamMember.SelectedUserId,
-                hasReports: transferResponsibility.SelectedOptions?.Any(option => option == Option.Yes) ?? false);
+                hasReports: userHasReports ?? false);
 
             return new ResponseActionClose();
         }
