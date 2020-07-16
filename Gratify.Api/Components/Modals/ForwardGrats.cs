@@ -1,24 +1,33 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Gratify.Api.Database;
 using Gratify.Api.Database.Entities;
-using Gratify.Api.Services;
+using Microsoft.ApplicationInsights;
+using Microsoft.EntityFrameworkCore;
+using Slack.Client;
 using Slack.Client.BlockKit.BlockElements;
 using Slack.Client.BlockKit.BlockElements.Selects;
 using Slack.Client.BlockKit.CompositionObjects;
 using Slack.Client.BlockKit.LayoutBlocks;
-using Slack.Client.Chat;
 using Slack.Client.Interactions;
 using Slack.Client.Views;
 
-namespace Gratify.Api.Modals
+namespace Gratify.Api.Components.Modals
 {
     public class ForwardGrats
     {
-        private readonly InteractionService _interactions;
+        private readonly TelemetryClient _telemetry;
+        private readonly GratsDb _database;
+        private readonly SlackService _slackService;
+        private readonly ComponentsService _components;
 
-        public ForwardGrats(InteractionService interactions)
+        public ForwardGrats(TelemetryClient telemetry, GratsDb database, SlackService slackService, ComponentsService components)
         {
-            _interactions = interactions;
+            _telemetry = telemetry;
+            _database = database;
+            _slackService = slackService;
+            _components = components;
         }
 
         public Modal Modal(Review review) =>
@@ -55,12 +64,40 @@ namespace Gratify.Api.Modals
             }
 
             var transferResponsibility = submission.GetStateValue<CheckboxGroup>("InputTransferReviewResponsibility.TransferReviewResponsibility");
-            await _interactions.ForwardReview(
+            await ForwardReview(
                 correlationId: submission.CorrelationId,
                 newReviewerId: newReviewer.SelectedUserId,
                 transferReviewResponsibility: transferResponsibility.SelectedOptions?.Any(option => option == Option.Yes));
 
             return new ResponseActionClose();
+        }
+
+        public async Task ForwardReview(Guid correlationId, string newReviewerId, bool? transferReviewResponsibility)
+        {
+            var oldReview = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == correlationId);
+            if (oldReview == default)
+            {
+                _telemetry.TrackCorrelationId($"{nameof(ForwardReview)}: Review not found", correlationId);
+                return;
+            }
+
+            if (transferReviewResponsibility.GetValueOrDefault(false))
+            {
+                // TODO: This might be combined into one query.
+                var grats = await _database.Grats.SingleAsync(grats => grats.CorrelationId == correlationId);
+                var user = await _database.Users.SingleAsync(user => user.UserId == grats.Recipient);
+                user.DefaultReviewer = newReviewerId;
+            }
+
+            var newReview = oldReview.ForwardTo(newReviewerId);
+            var reviewMessage = await _components.RequestGratsReview.Message(newReview);
+            newReview.SetReviewRequest(await _slackService.SendMessage(reviewMessage));
+
+            await _database.AddAsync(newReview);
+            await _database.SaveChangesAsync();
+
+            var notifyOldReviewer = _components.RequestGratsReview.UpdateForwarded(oldReview, newReview);
+            await _slackService.UpdateMessage(notifyOldReviewer);
         }
     }
 }

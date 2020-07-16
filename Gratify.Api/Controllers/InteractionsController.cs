@@ -3,8 +3,10 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Web;
-using Gratify.Api.Messages;
-using Gratify.Api.Modals;
+using Gratify.Api.Components;
+using Gratify.Api.Components.HomeTabs;
+using Gratify.Api.Components.Messages;
+using Gratify.Api.Components.Modals;
 using Microsoft.AspNetCore.Mvc;
 using Slack.Client.Interactions;
 using Slack.Client.Interactions.Converters;
@@ -17,36 +19,11 @@ namespace Gratify.Api.Controllers
     public class InteractionsController : ControllerBase
     {
         private readonly JsonSerializerOptions _options;
-        private readonly SendGrats _sendGrats;
-        private readonly AllGratsSpent _allGratsSpent;
-        private readonly DenyGrats _denyGrats;
-        private readonly ForwardGrats _forwardGrats;
-        private readonly GratsReceived _gratsReceived;
-        private readonly AddTeamMember _addTeamMember;
-        private readonly ChangeSettings _changeSettings;
-        private readonly RequestGratsReview _requestGratsReview;
-        private readonly ShowAppHome _showAppHome;
+        private readonly ComponentsService _components;
 
-        public InteractionsController(
-            SendGrats sendGrats,
-            AllGratsSpent allGratsSpent,
-            DenyGrats denyGrats,
-            ForwardGrats forwardGrats,
-            GratsReceived gratsReceived,
-            AddTeamMember addTeamMember,
-            ChangeSettings changeSettings,
-            RequestGratsReview requestGratsReview,
-            ShowAppHome showAppHome)
+        public InteractionsController(ComponentsService components)
         {
-            _sendGrats = sendGrats;
-            _allGratsSpent = allGratsSpent;
-            _denyGrats = denyGrats;
-            _forwardGrats = forwardGrats;
-            _gratsReceived = gratsReceived;
-            _addTeamMember = addTeamMember;
-            _changeSettings = changeSettings;
-            _requestGratsReview = requestGratsReview;
-            _showAppHome = showAppHome;
+            _components = components;
             _options = new JsonSerializerOptions
             {
                 IgnoreNullValues = true
@@ -79,37 +56,37 @@ namespace Gratify.Api.Controllers
             var modalType = Type.GetType(submission.View.CallbackId);
             if (modalType == typeof(SendGrats))
             {
-                var response = await _sendGrats.OnSubmit(submission);
+                var response = await _components.SendGrats.OnSubmit(submission);
 
                 return response.Result();
             }
             else if (modalType == typeof(AllGratsSpent))
             {
-                var response = await _allGratsSpent.OnSubmit(submission);
+                var response = await _components.AllGratsSpent.OnSubmit(submission);
 
                 return response.Result();
             }
             else if (modalType == typeof(DenyGrats))
             {
-                var response = await _denyGrats.OnSubmit(submission);
+                var response = await _components.DenyGrats.OnSubmit(submission);
 
                 return response.Result();
             }
             else if (modalType == typeof(ForwardGrats))
             {
-                var response = await _forwardGrats.OnSubmit(submission);
+                var response = await _components.ForwardGrats.OnSubmit(submission);
 
                 return response.Result();
             }
             else if (modalType == typeof(AddTeamMember))
             {
-                var response = await _addTeamMember.OnSubmit(submission);
+                var response = await _components.AddTeamMember.OnSubmit(submission);
 
                 return response.Result();
             }
             else if (modalType == typeof(ChangeSettings))
             {
-                var response = await _changeSettings.OnSubmit(submission);
+                var response = await _components.ChangeSettings.OnSubmit(submission);
 
                 return response.Result();
             }
@@ -133,15 +110,15 @@ namespace Gratify.Api.Controllers
         {
             if (action.ActionId.Contains(typeof(RequestGratsReview).ToString()))
             {
-                await _requestGratsReview.OnSubmit(action, triggerId);
+                await _components.RequestGratsReview.OnSubmit(action, triggerId);
             }
             else if (action.ActionId.Contains(typeof(GratsReceived).ToString()))
             {
-                await _gratsReceived.OnSubmit(action, triggerId);
+                await _components.GratsReceived.OnSubmit(action, triggerId);
             }
             else if (action.ActionId.Contains(typeof(ShowAppHome).ToString()))
             {
-                await _showAppHome.OnSubmit(action, triggerId, userId, teamId);
+                await _components.ShowAppHome.OnSubmit(action, triggerId, userId, teamId);
             }
         }
     }

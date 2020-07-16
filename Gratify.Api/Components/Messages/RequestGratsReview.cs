@@ -1,34 +1,36 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Gratify.Api.Database;
 using Gratify.Api.Database.Entities;
-using Gratify.Api.Services;
+using Microsoft.ApplicationInsights;
+using Microsoft.EntityFrameworkCore;
 using Slack.Client;
 using Slack.Client.BlockKit.BlockElements;
 using Slack.Client.BlockKit.CompositionObjects;
 using Slack.Client.BlockKit.LayoutBlocks;
 using Slack.Client.Chat;
-using Slack.Client.Interactions;
+using Action = Slack.Client.Interactions.Action;
 
-namespace Gratify.Api.Messages
+namespace Gratify.Api.Components.Messages
 {
     public class RequestGratsReview
     {
         private readonly string _approve = $"{typeof(RequestGratsReview)}.Approve";
         private readonly string _deny = $"{typeof(RequestGratsReview)}.Deny";
         private readonly string _forward = $"{typeof(RequestGratsReview)}.Forward";
-        private readonly InteractionService _interactions;
+        private readonly TelemetryClient _telemetry;
+        private readonly GratsDb _database;
         private readonly SlackService _slackService;
+        private readonly ComponentsService _components;
 
-        public RequestGratsReview(SlackService slackService)
+        public RequestGratsReview(TelemetryClient telemetry, GratsDb database, SlackService slackService, ComponentsService components)
         {
+            _telemetry = telemetry;
+            _database = database;
             _slackService = slackService;
-        }
-
-        public RequestGratsReview(InteractionService interactions, SlackService slackService)
-        {
-            _interactions = interactions;
-            _slackService = slackService;
+            _components = components;
         }
 
         public async Task<PostMessage> Message(Review review) =>
@@ -91,15 +93,15 @@ namespace Gratify.Api.Messages
                     correlationId: action.CorrelationId,
                     approvedAt: System.DateTime.UtcNow);
 
-                await _interactions.ApproveGrats(approval);
+                await ApproveGrats(approval);
             }
             else if (action.ActionId == _deny)
             {
-                await _interactions.OpenDenyGrats(action.CorrelationId, triggerId);
+                await OpenDenyGrats(action.CorrelationId, triggerId);
             }
             else if (action.ActionId == _forward)
             {
-                await _interactions.OpenForwardReview(action.CorrelationId, triggerId);
+                await OpenForwardReview(action.CorrelationId, triggerId);
             }
         }
 
@@ -140,5 +142,49 @@ namespace Gratify.Api.Messages
                 originalMessage: review.ReviewRequest);
 
         private string WantsToSendGrats(Review review) => $"<@{review.Grats.Draft.Author}> wants to send grats to <@{review.Grats.Recipient}>!";
+
+        private async Task ApproveGrats(Approval approval)
+        {
+            var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == approval.CorrelationId);
+            if (review == default)
+            {
+                _telemetry.TrackEntity($"{nameof(ApproveGrats)}: Approval not found", approval);
+                return;
+            }
+
+            approval.Review = review;
+            approval.TeamId = review.TeamId;
+            await _database.AddAsync(approval);
+            await _database.SaveChangesAsync();
+
+            var notifyReviewer = UpdateApproved(approval);
+            await _slackService.UpdateMessage(notifyReviewer);
+        }
+
+        private async Task OpenDenyGrats(Guid correlationId, string triggerId)
+        {
+            var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == correlationId);
+            if (review == default)
+            {
+                _telemetry.TrackCorrelationId($"{nameof(OpenDenyGrats)}: Review not found", correlationId);
+                return;
+            }
+
+            var modal = _components.DenyGrats.Modal(review);
+            await _slackService.OpenModal(triggerId, modal);
+        }
+
+        private async Task OpenForwardReview(Guid correlationId, string triggerId)
+        {
+            var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == correlationId);
+            if (review == default)
+            {
+                _telemetry.TrackCorrelationId($"{nameof(OpenForwardReview)}: Review not found", correlationId);
+                return;
+            }
+
+            var modal = _components.ForwardGrats.Modal(review);
+            await _slackService.OpenModal(triggerId, modal);
+        }
     }
 }

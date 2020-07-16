@@ -1,19 +1,25 @@
 using System;
 using System.Threading.Tasks;
-using Gratify.Api.Services;
+using Gratify.Api.Database;
+using Microsoft.ApplicationInsights;
+using Microsoft.EntityFrameworkCore;
 using Slack.Client.BlockKit.LayoutBlocks;
 using Slack.Client.Interactions;
 using Slack.Client.Views;
 
-namespace Gratify.Api.Modals
+namespace Gratify.Api.Components.Modals
 {
     public class AllGratsSpent
     {
-        private readonly InteractionService _interactions;
+        private readonly TelemetryClient _telemetry;
+        private readonly GratsDb _database;
+        private readonly ComponentsService _components;
 
-        public AllGratsSpent(InteractionService interactions)
+        public AllGratsSpent(TelemetryClient telemetry, GratsDb database, ComponentsService components)
         {
-            _interactions = interactions;
+            _telemetry = telemetry;
+            _database = database;
+            _components = components;
         }
 
         public Modal Modal(Guid correlationId, DateTime lastGratsSentAt, int periodInDays) =>
@@ -33,12 +39,23 @@ namespace Gratify.Api.Modals
 
         public async Task<ResponseAction> OnSubmit(ViewSubmission submission)
         {
-            var modal = await _interactions.SendGratsAnyway(submission.CorrelationId);
+            var modal = await SendGratsAnyway(submission.CorrelationId);
 
             return new ResponseActionPush(modal);
         }
 
         private int RemainingDays(DateTime lastGratsSentAt, int periodInDays) =>
             lastGratsSentAt.Subtract(DateTime.UtcNow.AddDays(-periodInDays)).Days;
+
+        private async Task<Modal> SendGratsAnyway(Guid correlationId)
+        {
+            var draft = await _database.IncompleteDrafts.SingleOrDefaultAsync(draft => draft.CorrelationId == correlationId);
+            if (draft == null)
+            {
+                _telemetry.TrackCorrelationId($"{nameof(SendGratsAnyway)}: Draft not found", correlationId);
+            }
+
+            return _components.SendGrats.Modal(draft);
+        }
     }
 }

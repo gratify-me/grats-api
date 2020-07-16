@@ -1,21 +1,30 @@
 using System;
 using System.Threading.Tasks;
+using Gratify.Api.Database;
 using Gratify.Api.Database.Entities;
-using Gratify.Api.Services;
+using Microsoft.ApplicationInsights;
+using Microsoft.EntityFrameworkCore;
+using Slack.Client;
 using Slack.Client.BlockKit.BlockElements;
 using Slack.Client.BlockKit.LayoutBlocks;
 using Slack.Client.Interactions;
 using Slack.Client.Views;
 
-namespace Gratify.Api.Modals
+namespace Gratify.Api.Components.Modals
 {
     public class DenyGrats
     {
-        private readonly InteractionService _interactions;
+        private readonly TelemetryClient _telemetry;
+        private readonly GratsDb _database;
+        private readonly SlackService _slackService;
+        private readonly ComponentsService _components;
 
-        public DenyGrats(InteractionService interactions)
+        public DenyGrats(TelemetryClient telemetry, GratsDb database, SlackService slackService, ComponentsService components)
         {
-            _interactions = interactions;
+            _telemetry = telemetry;
+            _database = database;
+            _slackService = slackService;
+            _components = components;
         }
 
         public Modal Modal(Review review) =>
@@ -48,9 +57,27 @@ namespace Gratify.Api.Modals
                 reason: reason.Value,
                 deniedAt: DateTime.UtcNow);
 
-            await _interactions.DenyGrats(denial);
+            await SubmitDenyGrats(denial);
 
             return new ResponseActionClose();
+        }
+
+        private async Task SubmitDenyGrats(Denial denial)
+        {
+            var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == denial.CorrelationId);
+            if (review == default)
+            {
+                _telemetry.TrackEntity($"{nameof(DenyGrats)}: Denial not found", denial);
+                return;
+            }
+
+            denial.Review = review;
+            denial.TeamId = review.TeamId;
+            await _database.AddAsync(denial);
+            await _database.SaveChangesAsync();
+
+            var notifyReviewer = _components.RequestGratsReview.UpdateDenied(denial);
+            await _slackService.UpdateMessage(notifyReviewer);
         }
     }
 }

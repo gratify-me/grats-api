@@ -3,28 +3,33 @@ using System.Linq;
 using System.Threading.Tasks;
 using Gratify.Api.Database;
 using Gratify.Api.Database.Entities;
-using Gratify.Api.Services;
+using Microsoft.ApplicationInsights;
 using Microsoft.EntityFrameworkCore;
+using Slack.Client;
 using Slack.Client.BlockKit.BlockElements;
 using Slack.Client.BlockKit.LayoutBlocks;
-using Slack.Client.Interactions;
 using Slack.Client.Views;
+using Action = Slack.Client.Interactions.Action;
 
-namespace Gratify.Api.Modals
+namespace Gratify.Api.Components.HomeTabs
 {
     public class ShowAppHome
     {
-        private readonly string _sendGrats = $"{typeof(ShowAppHome)}.SendGrats";
-        private readonly string _addTeamMember = $"{typeof(ShowAppHome)}.AddTeamMember";
+        private readonly string _openSendGrats = $"{typeof(ShowAppHome)}.OpenSendGrats";
+        private readonly string _openAddTeamMember = $"{typeof(ShowAppHome)}.OpenAddTeamMember";
         private readonly string _removeTeamMember = $"{typeof(ShowAppHome)}.RemoveTeamMember";
-        private readonly string _changeSettings = $"{typeof(ShowAppHome)}.ChangeSettings";
-        private readonly InteractionService _interactions;
+        private readonly string _openChangeSettings = $"{typeof(ShowAppHome)}.OpenChangeSettings";
+        private readonly TelemetryClient _telemetry;
         private readonly GratsDb _database;
+        private readonly SlackService _slackService;
+        private readonly ComponentsService _components;
 
-        public ShowAppHome(InteractionService interactions, GratsDb database)
+        public ShowAppHome(TelemetryClient telemetry, GratsDb database, SlackService slackService, ComponentsService components)
         {
-            _interactions = interactions;
+            _telemetry = telemetry;
             _database = database;
+            _slackService = slackService;
+            _components = components;
         }
 
         public async Task<HomeTab> HomeTab(string teamId, string userId)
@@ -46,7 +51,7 @@ namespace Gratify.Api.Modals
                     elements: new BlockElement[]
                     {
                         new Button(
-                            id: _sendGrats,
+                            id: _openSendGrats,
                             value: userId,
                             text: ":grats: Send Grats")
                     }),
@@ -55,7 +60,7 @@ namespace Gratify.Api.Modals
                     id: "YourTeam",
                     text: ":rocket: *Your team*",
                     accessory: new Button(
-                        id: _addTeamMember,
+                        id: _openAddTeamMember,
                         value: userId,
                         text: ":heavy_plus_sign: New member")),
 
@@ -73,16 +78,16 @@ namespace Gratify.Api.Modals
 
         public async Task OnSubmit(Action action, string triggerId, string userId, string teamId)
         {
-            if (action.ActionId == _addTeamMember)
+            if (action.ActionId == _openAddTeamMember)
             {
-                await _interactions.OpenAddTeamMember(triggerId);
+                await OpenAddTeamMember(triggerId);
             }
             else if (action.ActionId == _removeTeamMember)
             {
                 var memberUserId = int.Parse(action.Value);
-                await _interactions.RemoveTeamMember(teamId, userId, memberUserId);
+                await RemoveTeamMember(teamId, userId, memberUserId);
             }
-            else if (action.ActionId == _sendGrats)
+            else if (action.ActionId == _openSendGrats)
             {
                 var draft = new Draft(
                     correlationId: System.Guid.NewGuid(),
@@ -90,12 +95,45 @@ namespace Gratify.Api.Modals
                     createdAt: System.DateTime.UtcNow,
                     author: userId);
 
-                await _interactions.SendGrats(draft, triggerId);
+                await _components.SendGrats.OpenSendGrats(draft, triggerId);
             }
-            else if (action.ActionId == _changeSettings)
+            else if (action.ActionId == _openChangeSettings)
             {
-                await _interactions.OpenChangeSettings(triggerId, teamId, userId);
+                await OpenChangeSettings(triggerId, teamId, userId);
             }
+        }
+
+        public async Task DisplayFor(string teamId, string userId)
+        {
+            var homeBlocks = await HomeTab(teamId, userId);
+            await _slackService.PublishModal(userId, homeBlocks);
+        }
+
+        private async Task OpenAddTeamMember(string triggerId)
+        {
+            var modal = _components.AddTeamMember.Modal();
+            await _slackService.OpenModal(triggerId, modal);
+        }
+
+        private async Task RemoveTeamMember(string teamId, string userId, int teamMemberId)
+        {
+            var teamMember = await _database.Users.FindAsync(teamMemberId);
+            if (teamMember == null)
+            {
+                _telemetry.TrackUserId($"{nameof(RemoveTeamMember)}: User not found", userId);
+                return;
+            }
+
+            teamMember.DefaultReviewer = null;
+            await _database.SaveChangesAsync();
+            await DisplayFor(teamId, userId);
+        }
+
+        private async Task OpenChangeSettings(string triggerId, string teamId, string userId)
+        {
+            var settings = await _database.SettingsFor(teamId, userId);
+            var modal = _components.ChangeSettings.Modal(settings);
+            await _slackService.OpenModal(triggerId, modal);
         }
 
         private Section TeamMemberSection(User user) =>
@@ -110,7 +148,7 @@ namespace Gratify.Api.Modals
 
         private async Task<List<LayoutBlock>> SettingsSection(string teamId, string userId)
         {
-            var settings = await _interactions.FindSettings(teamId, userId);
+            var settings = await _database.SettingsFor(teamId, userId);
 
             return new List<LayoutBlock>
             {
@@ -118,7 +156,7 @@ namespace Gratify.Api.Modals
                     id: "SettingsHeader",
                     text: ":hammer_and_wrench: *Settings*",
                     accessory: new Button(
-                        id: _changeSettings,
+                        id: _openChangeSettings,
                         value: userId,
                         text: ":currency_exchange: Change Settings")),
 

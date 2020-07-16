@@ -1,7 +1,6 @@
 using System.Net.Http.Headers;
+using Gratify.Api.Components;
 using Gratify.Api.Database;
-using Gratify.Api.Messages;
-using Gratify.Api.Modals;
 using Gratify.Api.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -55,26 +54,11 @@ namespace Gratify.Api
                     options.JsonSerializerOptions.Converters.Add(new MessagePayloadConverter());
                 });
 
-            services.AddTransient<InteractionService>();
-
             var databaseSettings = Configuration.GetSection("DatabaseSettings").Get<DatabaseSettings>();
             services.AddGratsDb(databaseSettings);
 
-            // Add messages
-            services.AddTransient<GratsReceived>();
-            services.AddTransient<NotifyGratsSent>();
-            services.AddTransient<RequestGratsReview>();
+            services.AddScoped<ComponentsService>();
 
-            // Add modals
-            services.AddTransient<AddTeamMember>();
-            services.AddTransient<ChangeSettings>();
-            services.AddTransient<DenyGrats>();
-            services.AddTransient<ForwardGrats>();
-            services.AddTransient<SendGrats>();
-            services.AddTransient<AllGratsSpent>();
-            services.AddTransient<ShowAppHome>();
-
-            // Add services
             services.AddHostedService<SubmitGratsForReview>();
             services.AddHostedService<NotifyGratsApproved>();
             services.AddHostedService<NotifyGratsDenied>();

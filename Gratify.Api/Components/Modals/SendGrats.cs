@@ -1,22 +1,32 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
+using Gratify.Api.Database;
 using Gratify.Api.Database.Entities;
-using Gratify.Api.Services;
+using Microsoft.ApplicationInsights;
+using Microsoft.EntityFrameworkCore;
+using Slack.Client;
 using Slack.Client.BlockKit.BlockElements;
 using Slack.Client.BlockKit.BlockElements.Selects;
 using Slack.Client.BlockKit.LayoutBlocks;
 using Slack.Client.Interactions;
 using Slack.Client.Views;
 
-namespace Gratify.Api.Modals
+namespace Gratify.Api.Components.Modals
 {
     public class SendGrats
     {
-        private readonly InteractionService _interactions;
+        private readonly TelemetryClient _telemetry;
+        private readonly GratsDb _database;
+        private readonly SlackService _slackService;
+        private readonly ComponentsService _components;
 
-        public SendGrats(InteractionService interactions)
+        public SendGrats(TelemetryClient telemetry, GratsDb database, SlackService slackService, ComponentsService components)
         {
-            _interactions = interactions;
+            _telemetry = telemetry;
+            _database = database;
+            _slackService = slackService;
+            _components = components;
         }
 
         public Modal Modal(Draft draft, string userId = null) =>
@@ -92,9 +102,50 @@ namespace Gratify.Api.Modals
                 action: action.Value,
                 result: result.Value);
 
-            await _interactions.SubmitGratsForReview(grats);
+            await SubmitGratsForReview(grats);
 
             return new ResponseActionClear();
+        }
+
+        public async Task OpenSendGrats(Draft draft, string triggerId, string userId = null)
+        {
+            await _database.AddAsync(draft);
+            await _database.SaveChangesAsync();
+
+            var settings = await _database.SettingsFor(draft.TeamId, draft.Author);
+            // TODO: Include pending grats as well to avoid over-sending.
+            var approvedGratsLastPeriod = _database.Approvals
+                .Select(approval => approval.Review.Grats)
+                .Where(grats => grats.Draft.Author == draft.Author)
+                .Where(grats => grats.CreatedAt > DateTime.UtcNow.AddDays(-settings.GratsPeriodInDays))
+                .OrderByDescending(grats => grats.CreatedAt);
+
+            if (await approvedGratsLastPeriod.CountAsync() >= settings.NumberOfGratsPerPeriod)
+            {
+                var lastApprovedGrats = await approvedGratsLastPeriod.FirstAsync();
+                var allGratsSpentModal = _components.AllGratsSpent.Modal(draft.CorrelationId, lastApprovedGrats.CreatedAt, settings.GratsPeriodInDays);
+                await _slackService.OpenModal(triggerId, allGratsSpentModal);
+            }
+            else
+            {
+                var modal = Modal(draft, userId);
+                await _slackService.OpenModal(triggerId, modal);
+            }
+        }
+
+        private async Task SubmitGratsForReview(Grats grats)
+        {
+            var draft = await _database.IncompleteDrafts.SingleOrDefaultAsync(draft => draft.CorrelationId == grats.CorrelationId);
+            if (draft == default)
+            {
+                _telemetry.TrackEntity($"{nameof(SubmitGratsForReview)}: Draft not found", grats);
+                return;
+            }
+
+            grats.Draft = draft;
+            grats.TeamId = draft.TeamId;
+            await _database.AddAsync(grats);
+            await _database.SaveChangesAsync();
         }
     }
 }

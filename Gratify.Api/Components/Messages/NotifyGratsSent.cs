@@ -1,19 +1,22 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Gratify.Api.Database.Entities;
+using Microsoft.ApplicationInsights;
 using Slack.Client;
 using Slack.Client.BlockKit.CompositionObjects;
 using Slack.Client.BlockKit.LayoutBlocks;
 using Slack.Client.Chat;
 
-namespace Gratify.Api.Messages
+namespace Gratify.Api.Components.Messages
 {
     public class NotifyGratsSent
     {
+        private readonly TelemetryClient _telemetry;
         private readonly SlackService _slackService;
 
-        public NotifyGratsSent(SlackService slackService)
+        public NotifyGratsSent(TelemetryClient telemetry, SlackService slackService)
         {
+            _telemetry = telemetry;
             _slackService = slackService;
         }
 

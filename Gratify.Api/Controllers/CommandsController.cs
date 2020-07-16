@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Gratify.Api.Commands;
+using Gratify.Api.Components;
 using Gratify.Api.Database.Entities;
-using Gratify.Api.Dto;
-using Gratify.Api.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gratify.Api.Controllers
@@ -13,11 +13,11 @@ namespace Gratify.Api.Controllers
     public class CommandsController : ControllerBase
     {
         private readonly Regex _userIdRegex = new Regex(@"(?<=<@)([A-Z0-9])+(?=\|.+>)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private readonly InteractionService _interactions;
+        private readonly ComponentsService _components;
 
-        public CommandsController(InteractionService interactions)
+        public CommandsController(ComponentsService components)
         {
-            _interactions = interactions;
+            _components = components;
         }
 
         [HttpPost]
@@ -37,7 +37,7 @@ namespace Gratify.Api.Controllers
                 author: slashCommand.UserId);
 
             var userId = GetUserId(slashCommand);
-            await _interactions.SendGrats(draft, slashCommand.TriggerId, userId);
+            await _components.SendGrats.OpenSendGrats(draft, slashCommand.TriggerId, userId);
 
             return Ok();
         }

@@ -1,23 +1,32 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Gratify.Api.Database;
 using Gratify.Api.Database.Entities;
-using Gratify.Api.Services;
+using Microsoft.ApplicationInsights;
+using Microsoft.EntityFrameworkCore;
+using Slack.Client;
 using Slack.Client.BlockKit.BlockElements.Selects;
 using Slack.Client.BlockKit.CompositionObjects;
 using Slack.Client.BlockKit.LayoutBlocks;
 using Slack.Client.Interactions;
 using Slack.Client.Views;
 
-namespace Gratify.Api.Modals
+namespace Gratify.Api.Components.Modals
 {
     public class ChangeSettings
     {
-        private readonly InteractionService _interactions;
+        private readonly TelemetryClient _telemetry;
+        private readonly GratsDb _database;
+        private readonly SlackService _slackService;
+        private readonly ComponentsService _components;
 
-        public ChangeSettings(InteractionService interactions)
+        public ChangeSettings(TelemetryClient telemetry, GratsDb database, SlackService slackService, ComponentsService components)
         {
-            _interactions = interactions;
+            _telemetry = telemetry;
+            _database = database;
+            _slackService = slackService;
+            _components = components;
         }
 
         public Modal Modal(Settings settings) =>
@@ -65,13 +74,32 @@ namespace Gratify.Api.Modals
             var gratsPeriodInDays = submission.GetStateValue<StaticSelect>("SelectGratsPeriod.GratsPeriodInDays");
             var numberOfGratsPerPeriod = submission.GetStateValue<StaticSelect>("SelectNumberOfGrats.NumberOfGratsPerPeriod");
 
-            await _interactions.ChangeSettings(
+            await SaveNewSettings(
                 teamId: submission.Team.Id,
                 userId: submission.User.Id,
                 gratsPeriodInDays: int.Parse(gratsPeriodInDays.SelectedOption.Value),
                 numberOfGratsPerPeriod: int.Parse(numberOfGratsPerPeriod.SelectedOption.Value));
 
             return new ResponseActionClose();
+        }
+
+        public async Task SaveNewSettings(string teamId, string userId, int gratsPeriodInDays, int numberOfGratsPerPeriod)
+        {
+            var settings = await _database.Settings.SingleOrDefaultAsync(setting => setting.TeamId == teamId);
+            if (settings == default)
+            {
+                _telemetry.TrackUserId($"{nameof(ChangeSettings)}: Settings not found", userId);
+                return;
+            }
+
+            settings.GratsPeriodInDays = gratsPeriodInDays;
+            settings.NumberOfGratsPerPeriod = numberOfGratsPerPeriod;
+            settings.UpdatedAt = DateTime.UtcNow;
+            settings.UpdatedBy = userId;
+
+            await _database.SaveChangesAsync();
+            var homeBlocks = await _components.ShowAppHome.HomeTab(teamId, userId);
+            await _slackService.PublishModal(userId, homeBlocks);
         }
     }
 }

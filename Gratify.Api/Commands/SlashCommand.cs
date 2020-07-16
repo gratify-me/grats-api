@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace Gratify.Api.Dto
+namespace Gratify.Api.Commands
 {
     /// <summary>
     /// Slash Commands allow users to invoke your app by typing a string into the message composer box.

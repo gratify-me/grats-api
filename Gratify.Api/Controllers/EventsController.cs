@@ -1,5 +1,5 @@
 using System.Threading.Tasks;
-using Gratify.Api.Services;
+using Gratify.Api.Components;
 using Microsoft.AspNetCore.Mvc;
 using Slack.Client.Events;
 
@@ -9,11 +9,11 @@ namespace Gratify.Api.Controllers
     [Route("[controller]")]
     public class EventsController : ControllerBase
     {
-        private readonly InteractionService _interactions;
+        private readonly ComponentsService _components;
 
-        public EventsController(InteractionService interactions)
+        public EventsController(ComponentsService components)
         {
-            _interactions = interactions;
+            _components = components;
         }
 
         [HttpPost]
@@ -31,7 +31,7 @@ namespace Gratify.Api.Controllers
 
         private async Task<IActionResult> ShowAppHome(string teamId, string userId)
         {
-            await _interactions.ShowAppHome(teamId, userId);
+            await _components.ShowAppHome.DisplayFor(teamId, userId);
 
             return Ok();
         }
