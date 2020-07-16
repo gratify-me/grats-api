@@ -30,14 +30,9 @@ namespace Gratify.Api.Controllers
 
         private async Task<IActionResult> SendGrats(SlashCommand slashCommand)
         {
-            var draft = new Draft(
-                correlationId: Guid.NewGuid(),
-                teamId: slashCommand.TeamId,
-                createdAt: DateTime.UtcNow,
-                author: slashCommand.UserId);
-
+            var authorId = slashCommand.UserId;
             var userId = GetUserId(slashCommand);
-            await _components.SendGrats.OpenSendGrats(draft, slashCommand.TriggerId, userId);
+            await _components.SendGrats.Open(slashCommand.TriggerId, slashCommand.TeamId, authorId, userId);
 
             return Ok();
         }

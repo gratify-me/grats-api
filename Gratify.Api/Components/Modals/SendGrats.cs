@@ -29,10 +29,10 @@ namespace Gratify.Api.Components.Modals
             _components = components;
         }
 
-        public Modal Modal(Draft draft, string userId = null) =>
+        public Modal Modal(Guid correlationId, string userId = null) =>
             new Modal(
                 id: typeof(SendGrats),
-                correlationId: draft.CorrelationId,
+                correlationId: correlationId,
                 title: $"Send Grats!",
                 submit: "Send Grats",
                 close: "Cancel",
@@ -96,56 +96,42 @@ namespace Gratify.Api.Components.Modals
 
             var grats = new Grats(
                 correlationId: submission.CorrelationId,
+                teamId: submission.Team.Id,
                 createdAt: DateTime.UtcNow,
                 recipient: recipient.SelectedUserId,
+                author: submission.User.Id,
                 challenge: challenge.Value,
                 action: action.Value,
                 result: result.Value);
 
-            await SubmitGratsForReview(grats);
+            await _database.AddAsync(grats);
+            await _database.SaveChangesAsync();
 
             return new ResponseActionClear();
         }
 
-        public async Task OpenSendGrats(Draft draft, string triggerId, string userId = null)
+        public async Task Open(string triggerId, string teamId, string authorId, string userId = null)
         {
-            await _database.AddAsync(draft);
-            await _database.SaveChangesAsync();
-
-            var settings = await _database.SettingsFor(draft.TeamId, draft.Author);
+            var correlationId = Guid.NewGuid();
+            var settings = await _database.SettingsFor(teamId, authorId);
             // TODO: Include pending grats as well to avoid over-sending.
             var approvedGratsLastPeriod = _database.Approvals
                 .Select(approval => approval.Review.Grats)
-                .Where(grats => grats.Draft.Author == draft.Author)
+                .Where(grats => grats.Author == authorId)
                 .Where(grats => grats.CreatedAt > DateTime.UtcNow.AddDays(-settings.GratsPeriodInDays))
                 .OrderByDescending(grats => grats.CreatedAt);
 
             if (await approvedGratsLastPeriod.CountAsync() >= settings.NumberOfGratsPerPeriod)
             {
                 var lastApprovedGrats = await approvedGratsLastPeriod.FirstAsync();
-                var allGratsSpentModal = _components.AllGratsSpent.Modal(draft.CorrelationId, lastApprovedGrats.CreatedAt, settings.GratsPeriodInDays);
+                var allGratsSpentModal = _components.AllGratsSpent.Modal(correlationId, lastApprovedGrats.CreatedAt, settings.GratsPeriodInDays);
                 await _slackService.OpenModal(triggerId, allGratsSpentModal);
             }
             else
             {
-                var modal = Modal(draft, userId);
+                var modal = Modal(correlationId, userId);
                 await _slackService.OpenModal(triggerId, modal);
             }
-        }
-
-        private async Task SubmitGratsForReview(Grats grats)
-        {
-            var draft = await _database.IncompleteDrafts.SingleOrDefaultAsync(draft => draft.CorrelationId == grats.CorrelationId);
-            if (draft == default)
-            {
-                _telemetry.TrackEntity($"{nameof(SubmitGratsForReview)}: Draft not found", grats);
-                return;
-            }
-
-            grats.Draft = draft;
-            grats.TeamId = draft.TeamId;
-            await _database.AddAsync(grats);
-            await _database.SaveChangesAsync();
         }
     }
 }

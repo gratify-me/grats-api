@@ -39,23 +39,13 @@ namespace Gratify.Api.Components.Modals
 
         public async Task<ResponseAction> OnSubmit(ViewSubmission submission)
         {
-            var modal = await SendGratsAnyway(submission.CorrelationId);
+            await Task.CompletedTask;
+            var modal = _components.SendGrats.Modal(submission.CorrelationId);
 
             return new ResponseActionPush(modal);
         }
 
         private int RemainingDays(DateTime lastGratsSentAt, int periodInDays) =>
             lastGratsSentAt.Subtract(DateTime.UtcNow.AddDays(-periodInDays)).Days;
-
-        private async Task<Modal> SendGratsAnyway(Guid correlationId)
-        {
-            var draft = await _database.IncompleteDrafts.SingleOrDefaultAsync(draft => draft.CorrelationId == correlationId);
-            if (draft == null)
-            {
-                _telemetry.TrackCorrelationId($"{nameof(SendGratsAnyway)}: Draft not found", correlationId);
-            }
-
-            return _components.SendGrats.Modal(draft);
-        }
     }
 }

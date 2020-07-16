@@ -10,11 +10,6 @@ namespace Gratify.Api.Database
     {
         public GratsDb(DbContextOptions<GratsDb> options) : base(options) { }
 
-        public DbSet<Draft> Drafts { get; set; }
-
-        public IQueryable<Draft> IncompleteDrafts =>
-            Drafts.Where(draft => draft.Grats == null);
-
         public DbSet<Grats> Grats { get; set; }
 
         public DbSet<Review> Reviews { get; set; }
@@ -22,7 +17,6 @@ namespace Gratify.Api.Database
         public IQueryable<Review> IncompleteReviews =>
             Reviews
                 .Include(review => review.Grats)
-                .ThenInclude(grats => grats.Draft)
                 .Where(review => !review.IsForwarded)
                 .Where(review => review.Approval == null)
                 .Where(review => review.Denial == null);

@@ -6,10 +6,12 @@ namespace Gratify.Api.Database.Entities
 {
     public class Grats : Entity
     {
-        public Grats(Guid correlationId, DateTime createdAt, string recipient, string challenge, string action, string result)
+        public Grats(Guid correlationId, string teamId, DateTime createdAt, string author, string recipient, string challenge, string action, string result)
         {
             CorrelationId = correlationId;
+            TeamId = teamId;
             CreatedAt = createdAt;
+            Author = author;
             Recipient = recipient;
             Challenge = challenge;
             Action = action;
@@ -18,6 +20,11 @@ namespace Gratify.Api.Database.Entities
 
         [Required]
         public DateTime CreatedAt { get; private set; }
+
+        [Required]
+        [MinLength(1)]
+        [MaxLength(100)]
+        public string Author { get; private set; }
 
         [Required]
         [MinLength(1)]
@@ -38,12 +45,6 @@ namespace Gratify.Api.Database.Entities
         [MinLength(1)]
         [MaxLength(300)]
         public string Result { get; private set; }
-
-        [Required]
-        public int DraftId { get; set; }
-
-        [Required]
-        public Draft Draft { get; set; }
 
         public ICollection<Review> Reviews { get; } = new List<Review>();
     }

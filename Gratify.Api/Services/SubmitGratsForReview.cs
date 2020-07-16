@@ -35,7 +35,6 @@ namespace Gratify.Api.Services
                 var components = scope.ServiceProvider.GetRequiredService<ComponentsService>();
 
                 var pendingGrats = await database.Grats
-                    .Include(grats => grats.Draft)
                     .Where(grats => !grats.Reviews.Any())
                     .Take(10)
                     .ToArrayAsync();
@@ -53,10 +52,10 @@ namespace Gratify.Api.Services
         {
             var notifyAuthor = await component.NotifyGratsSent.Message(grats);
             var authorNotification = await _slackService.SendMessage(notifyAuthor);
-            var reviewer = await FindReviewerOrDefault(database, grats.Recipient, grats.Draft.TeamId);
+            var reviewer = await FindReviewerOrDefault(database, grats.Recipient, grats.TeamId);
             if (reviewer == default)
             {
-                reviewer = grats.Draft.Author;
+                reviewer = grats.Author;
             }
 
             var review = new Review(
@@ -66,7 +65,7 @@ namespace Gratify.Api.Services
                 authorNotification: authorNotification);
 
             review.Grats = grats;
-            review.TeamId = grats.Draft.TeamId;
+            review.TeamId = grats.TeamId;
 
             var reviewMessage = await component.RequestGratsReview.Message(review);
             review.SetReviewRequest(await _slackService.SendMessage(reviewMessage));

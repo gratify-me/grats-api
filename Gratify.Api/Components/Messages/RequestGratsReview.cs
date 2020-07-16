@@ -141,7 +141,7 @@ namespace Gratify.Api.Components.Messages
                     .ToArray(),
                 originalMessage: review.ReviewRequest);
 
-        private string WantsToSendGrats(Review review) => $"<@{review.Grats.Draft.Author}> wants to send grats to <@{review.Grats.Recipient}>!";
+        private string WantsToSendGrats(Review review) => $"<@{review.Grats.Author}> wants to send grats to <@{review.Grats.Recipient}>!";
 
         private async Task ApproveGrats(Approval approval)
         {

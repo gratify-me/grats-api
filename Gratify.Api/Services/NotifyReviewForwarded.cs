@@ -35,7 +35,6 @@ namespace Gratify.Api.Services
 
                 var pendingReviews = await database.Reviews
                     .Include(review => review.Grats)
-                        .ThenInclude(grats => grats.Draft)
                     .Where(review => review.ForwardedFrom.HasValue && !review.IsNotified)
                     .Take(10)
                     .ToArrayAsync();

@@ -30,7 +30,7 @@ namespace Gratify.Api.Components.Messages
 
         public PostMessage Message(Approval approval) =>
             new PostMessage(
-                text: $"Congratulations! <@{approval.Review.Grats.Draft.Author}> just sent you grats 🎉",
+                text: $"Congratulations! <@{approval.Review.Grats.Author}> just sent you grats 🎉",
                 blocks: new LayoutBlock[]
                 {
                     new Section(
@@ -41,7 +41,7 @@ namespace Gratify.Api.Components.Messages
 
                     new Section(
                         id: "Congratulations",
-                        text: $"Congratulations! <@{approval.Review.Grats.Draft.Author}> just sent you grats 🎉"),
+                        text: $"Congratulations! <@{approval.Review.Grats.Author}> just sent you grats 🎉"),
 
                     new Section(
                         id: "Challenge",
@@ -101,7 +101,6 @@ namespace Gratify.Api.Components.Messages
             var approval = await _database.Approvals
                 .Include(approval => approval.Review)
                     .ThenInclude(review => review.Grats)
-                        .ThenInclude(grats => grats.Draft)
                 .SingleOrDefaultAsync(approval => approval.CorrelationId == receival.CorrelationId);
 
             if (approval == default)

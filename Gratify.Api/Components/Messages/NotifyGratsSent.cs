@@ -54,7 +54,7 @@ namespace Gratify.Api.Components.Messages
                 }),
             };
 
-            var channel = await _slackService.GetAppChannel(grats.Draft.Author);
+            var channel = await _slackService.GetAppChannel(grats.Author);
             return new PostMessage(
                 text: GratsInformation(grats.Recipient),
                 blocks: blocks.ToArray(),
@@ -88,7 +88,7 @@ namespace Gratify.Api.Components.Messages
         public UpdateMessage UpdateReceived(Receival receival) =>
             UpdateMessage(receival.Approval.Review, new MrkdwnText[]
             {
-                new MrkdwnText($"Grats received! Thanks <@{receival.Approval.Review.Grats.Draft.Author}> :heart:")
+                new MrkdwnText($"Grats received! Thanks <@{receival.Approval.Review.Grats.Author}> :heart:")
             });
 
         private UpdateMessage UpdateMessage(Review review, MrkdwnText[] updates)

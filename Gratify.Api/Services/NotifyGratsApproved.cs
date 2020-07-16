@@ -36,7 +36,6 @@ namespace Gratify.Api.Services
                 var pendingApprovals = await database.Approvals
                     .Include(grats => grats.Review)
                         .ThenInclude(review => review.Grats)
-                            .ThenInclude(grats => grats.Draft)
                     .Where(approval => !approval.IsNotified)
                     .Take(10)
                     .ToArrayAsync();

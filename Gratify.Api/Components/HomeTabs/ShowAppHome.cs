@@ -89,13 +89,7 @@ namespace Gratify.Api.Components.HomeTabs
             }
             else if (action.ActionId == _openSendGrats)
             {
-                var draft = new Draft(
-                    correlationId: System.Guid.NewGuid(),
-                    teamId: teamId,
-                    createdAt: System.DateTime.UtcNow,
-                    author: userId);
-
-                await _components.SendGrats.OpenSendGrats(draft, triggerId);
+                await _components.SendGrats.Open(triggerId, teamId, userId);
             }
             else if (action.ActionId == _openChangeSettings)
             {
