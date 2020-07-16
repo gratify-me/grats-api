@@ -27,7 +27,7 @@ namespace Gratify.Api.Migrations
                 table: "Grats",
                 maxLength: 100,
                 nullable: false,
-                defaultValue: "");
+                defaultValue: string.Empty);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
