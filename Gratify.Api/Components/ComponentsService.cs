@@ -9,19 +9,19 @@ namespace Gratify.Api.Components
 {
     public class ComponentsService
     {
-        public GratsReceived GratsReceived { get; }
+        public AllGratsSpent AllGratsSpent { get; }
+
+        public SendGrats SendGrats { get; }
 
         public NotifyGratsSent NotifyGratsSent { get; }
 
-        public RequestGratsReview RequestGratsReview { get; }
+        public ReviewGrats ReviewGrats { get; }
 
         public DenyGrats DenyGrats { get; }
 
         public ForwardGrats ForwardGrats { get; }
 
-        public SendGrats SendGrats { get; }
-
-        public AllGratsSpent AllGratsSpent { get; }
+        public GratsReceived GratsReceived { get; }
 
         public ShowAppHome ShowAppHome { get; }
 
@@ -31,13 +31,13 @@ namespace Gratify.Api.Components
 
         public ComponentsService(TelemetryClient telemetry, SlackService slackService, GratsDb database)
         {
-            GratsReceived = new GratsReceived(telemetry, database, slackService, this);
+            AllGratsSpent = new AllGratsSpent(telemetry, database, this);
+            SendGrats = new SendGrats(telemetry, database, slackService, this);
             NotifyGratsSent = new NotifyGratsSent(telemetry, slackService);
-            RequestGratsReview = new RequestGratsReview(telemetry, database, slackService, this);
+            ReviewGrats = new ReviewGrats(telemetry, database, slackService, this);
             DenyGrats = new DenyGrats(telemetry, database, slackService, this);
             ForwardGrats = new ForwardGrats(telemetry, database, slackService, this);
-            SendGrats = new SendGrats(telemetry, database, slackService, this);
-            AllGratsSpent = new AllGratsSpent(telemetry, database, this);
+            GratsReceived = new GratsReceived(telemetry, database, slackService, this);
             ShowAppHome = new ShowAppHome(telemetry, database, slackService, this);
             AddTeamMember = new AddTeamMember(telemetry, database, slackService, this);
             ChangeSettings = new ChangeSettings(telemetry, database, slackService, this);

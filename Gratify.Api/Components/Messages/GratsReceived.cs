@@ -112,7 +112,7 @@ namespace Gratify.Api.Components.Messages
             receival.Approval = approval;
             receival.TeamId = approval.TeamId;
 
-            var notifyReviewer = _components.RequestGratsReview.UpdateReceived(receival);
+            var notifyReviewer = _components.ReviewGrats.UpdateReceived(receival);
             await _slackService.UpdateMessage(notifyReviewer);
 
             var notifyAuthor = _components.NotifyGratsSent.UpdateReceived(receival);

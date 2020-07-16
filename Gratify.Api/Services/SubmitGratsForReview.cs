@@ -67,7 +67,7 @@ namespace Gratify.Api.Services
             review.Grats = grats;
             review.TeamId = grats.TeamId;
 
-            var reviewMessage = await component.RequestGratsReview.Message(review);
+            var reviewMessage = await component.ReviewGrats.Message(review);
             review.SetReviewRequest(await _slackService.SendMessage(reviewMessage));
 
             await database.AddAsync(review);

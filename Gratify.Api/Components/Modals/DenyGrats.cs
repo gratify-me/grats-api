@@ -76,7 +76,7 @@ namespace Gratify.Api.Components.Modals
             await _database.AddAsync(denial);
             await _database.SaveChangesAsync();
 
-            var notifyReviewer = _components.RequestGratsReview.UpdateDenied(denial);
+            var notifyReviewer = _components.ReviewGrats.UpdateDenied(denial);
             await _slackService.UpdateMessage(notifyReviewer);
         }
     }

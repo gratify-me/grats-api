@@ -15,17 +15,17 @@ using Action = Slack.Client.Interactions.Action;
 
 namespace Gratify.Api.Components.Messages
 {
-    public class RequestGratsReview
+    public class ReviewGrats
     {
-        private readonly string _approve = $"{typeof(RequestGratsReview)}.Approve";
-        private readonly string _deny = $"{typeof(RequestGratsReview)}.Deny";
-        private readonly string _forward = $"{typeof(RequestGratsReview)}.Forward";
+        private readonly string _approve = $"{typeof(ReviewGrats)}.Approve";
+        private readonly string _deny = $"{typeof(ReviewGrats)}.Deny";
+        private readonly string _forward = $"{typeof(ReviewGrats)}.Forward";
         private readonly TelemetryClient _telemetry;
         private readonly GratsDb _database;
         private readonly SlackService _slackService;
         private readonly ComponentsService _components;
 
-        public RequestGratsReview(TelemetryClient telemetry, GratsDb database, SlackService slackService, ComponentsService components)
+        public ReviewGrats(TelemetryClient telemetry, GratsDb database, SlackService slackService, ComponentsService components)
         {
             _telemetry = telemetry;
             _database = database;

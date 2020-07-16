@@ -90,13 +90,13 @@ namespace Gratify.Api.Components.Modals
             }
 
             var newReview = oldReview.ForwardTo(newReviewerId);
-            var reviewMessage = await _components.RequestGratsReview.Message(newReview);
+            var reviewMessage = await _components.ReviewGrats.Message(newReview);
             newReview.SetReviewRequest(await _slackService.SendMessage(reviewMessage));
 
             await _database.AddAsync(newReview);
             await _database.SaveChangesAsync();
 
-            var notifyOldReviewer = _components.RequestGratsReview.UpdateForwarded(oldReview, newReview);
+            var notifyOldReviewer = _components.ReviewGrats.UpdateForwarded(oldReview, newReview);
             await _slackService.UpdateMessage(notifyOldReviewer);
         }
     }

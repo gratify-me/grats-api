@@ -108,9 +108,9 @@ namespace Gratify.Api.Controllers
 
         private async Task HandleBlockAction(Slack.Client.Interactions.Action action, string responseUrl, string triggerId, string userId, string teamId)
         {
-            if (action.ActionId.Contains(typeof(RequestGratsReview).ToString()))
+            if (action.ActionId.Contains(typeof(ReviewGrats).ToString()))
             {
-                await _components.RequestGratsReview.OnSubmit(action, triggerId);
+                await _components.ReviewGrats.OnSubmit(action, triggerId);
             }
             else if (action.ActionId.Contains(typeof(GratsReceived).ToString()))
             {
