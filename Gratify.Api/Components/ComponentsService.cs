@@ -13,7 +13,7 @@ namespace Gratify.Api.Components
 
         public SendGrats SendGrats { get; }
 
-        public NotifyGratsSent NotifyGratsSent { get; }
+        public GratsSent NotifyGratsSent { get; }
 
         public ReviewGrats ReviewGrats { get; }
 
@@ -33,7 +33,7 @@ namespace Gratify.Api.Components
         {
             AllGratsSpent = new AllGratsSpent(telemetry, database, this);
             SendGrats = new SendGrats(telemetry, database, slackService, this);
-            NotifyGratsSent = new NotifyGratsSent(telemetry, slackService);
+            NotifyGratsSent = new GratsSent(telemetry, slackService);
             ReviewGrats = new ReviewGrats(telemetry, database, slackService, this);
             DenyGrats = new DenyGrats(telemetry, database, slackService, this);
             ForwardGrats = new ForwardGrats(telemetry, database, slackService, this);

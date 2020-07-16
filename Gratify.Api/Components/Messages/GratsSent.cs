@@ -9,12 +9,12 @@ using Slack.Client.Chat;
 
 namespace Gratify.Api.Components.Messages
 {
-    public class NotifyGratsSent
+    public class GratsSent
     {
         private readonly TelemetryClient _telemetry;
         private readonly SlackService _slackService;
 
-        public NotifyGratsSent(TelemetryClient telemetry, SlackService slackService)
+        public GratsSent(TelemetryClient telemetry, SlackService slackService)
         {
             _telemetry = telemetry;
             _slackService = slackService;
