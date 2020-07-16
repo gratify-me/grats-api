@@ -15,14 +15,14 @@ using Slack.Client.Views;
 
 namespace Gratify.Api.Components.Modals
 {
-    public class ForwardGrats
+    public class ForwardReview
     {
         private readonly TelemetryClient _telemetry;
         private readonly GratsDb _database;
         private readonly SlackService _slackService;
         private readonly ComponentsService _components;
 
-        public ForwardGrats(TelemetryClient telemetry, GratsDb database, SlackService slackService, ComponentsService components)
+        public ForwardReview(TelemetryClient telemetry, GratsDb database, SlackService slackService, ComponentsService components)
         {
             _telemetry = telemetry;
             _database = database;
@@ -32,10 +32,10 @@ namespace Gratify.Api.Components.Modals
 
         public Modal Modal(Review review) =>
             new Modal(
-                id: typeof(ForwardGrats),
+                id: typeof(ForwardReview),
                 correlationId: review.CorrelationId,
-                title: "Forward Grats",
-                submit: "Forward Grats",
+                title: "Forward Review",
+                submit: "Forward Review",
                 close: "Cancel",
                 blocks: new LayoutBlock[]
                 {
@@ -64,7 +64,7 @@ namespace Gratify.Api.Components.Modals
             }
 
             var transferResponsibility = submission.GetStateValue<CheckboxGroup>("InputTransferReviewResponsibility.TransferReviewResponsibility");
-            await ForwardReview(
+            await ForwardReviewTo(
                 correlationId: submission.CorrelationId,
                 newReviewerId: newReviewer.SelectedUserId,
                 transferReviewResponsibility: transferResponsibility.SelectedOptions?.Any(option => option == Option.Yes));
@@ -72,7 +72,7 @@ namespace Gratify.Api.Components.Modals
             return new ResponseActionClose();
         }
 
-        public async Task ForwardReview(Guid correlationId, string newReviewerId, bool? transferReviewResponsibility)
+        public async Task ForwardReviewTo(Guid correlationId, string newReviewerId, bool? transferReviewResponsibility)
         {
             var oldReview = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == correlationId);
             if (oldReview == default)

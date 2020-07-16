@@ -72,7 +72,7 @@ namespace Gratify.Api.Controllers
 
                 return response.Result();
             }
-            else if (modalType == typeof(ForwardGrats))
+            else if (modalType == typeof(ForwardReview))
             {
                 var response = await _components.ForwardGrats.OnSubmit(submission);
 
