@@ -11,16 +11,16 @@ using Slack.Client.Interactions;
 
 namespace Gratify.Api.Components.Messages
 {
-    public class GratsReceived
+    public class ReceiveGrats
     {
-        private readonly string _transferToAccount = $"{typeof(GratsReceived)}.Yes";
-        private readonly string _changeAccountDetails = $"{typeof(GratsReceived)}.ChangeAccountDetails";
+        private readonly string _transferToAccount = $"{typeof(ReceiveGrats)}.Yes";
+        private readonly string _changeAccountDetails = $"{typeof(ReceiveGrats)}.ChangeAccountDetails";
         private readonly TelemetryClient _telemetry;
         private readonly GratsDb _database;
         private readonly SlackService _slackService;
         private readonly ComponentsService _components;
 
-        public GratsReceived(TelemetryClient telemetry, GratsDb database, SlackService slackService, ComponentsService components)
+        public ReceiveGrats(TelemetryClient telemetry, GratsDb database, SlackService slackService, ComponentsService components)
         {
             _telemetry = telemetry;
             _database = database;

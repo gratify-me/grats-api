@@ -112,7 +112,7 @@ namespace Gratify.Api.Controllers
             {
                 await _components.ReviewGrats.OnSubmit(action, triggerId);
             }
-            else if (action.ActionId.Contains(typeof(GratsReceived).ToString()))
+            else if (action.ActionId.Contains(typeof(ReceiveGrats).ToString()))
             {
                 await _components.GratsReceived.OnSubmit(action, triggerId);
             }

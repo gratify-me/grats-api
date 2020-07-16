@@ -21,7 +21,7 @@ namespace Gratify.Api.Components
 
         public ForwardGrats ForwardGrats { get; }
 
-        public GratsReceived GratsReceived { get; }
+        public ReceiveGrats GratsReceived { get; }
 
         public ShowAppHome ShowAppHome { get; }
 
@@ -37,7 +37,7 @@ namespace Gratify.Api.Components
             ReviewGrats = new ReviewGrats(telemetry, database, slackService, this);
             DenyGrats = new DenyGrats(telemetry, database, slackService, this);
             ForwardGrats = new ForwardGrats(telemetry, database, slackService, this);
-            GratsReceived = new GratsReceived(telemetry, database, slackService, this);
+            GratsReceived = new ReceiveGrats(telemetry, database, slackService, this);
             ShowAppHome = new ShowAppHome(telemetry, database, slackService, this);
             AddTeamMember = new AddTeamMember(telemetry, database, slackService, this);
             ChangeSettings = new ChangeSettings(telemetry, database, slackService, this);
