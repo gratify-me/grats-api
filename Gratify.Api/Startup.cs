@@ -63,6 +63,7 @@ namespace Gratify.Api
             services.AddHostedService<NotifyGratsApproved>();
             services.AddHostedService<NotifyGratsDenied>();
             services.AddHostedService<NotifyReviewForwarded>();
+            services.AddHostedService<ImportUsers>();
         }
 
         public void Configure(IApplicationBuilder application, IWebHostEnvironment environment)

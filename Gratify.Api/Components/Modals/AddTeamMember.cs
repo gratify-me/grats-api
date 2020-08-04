@@ -86,16 +86,8 @@ namespace Gratify.Api.Components.Modals
         private async Task SaveNewTeamMember(string teamId, string userId, string teamMemberId, bool hasReports)
         {
             var teamMember = await _database.Users.SingleOrDefaultAsync(user => user.UserId == teamMemberId);
-            if (teamMember == default)
-            {
-                teamMember = new DbUser(teamId, teamMemberId, defaultReviewer: userId, hasReports: hasReports);
-                await _database.Users.AddAsync(teamMember);
-            }
-            else
-            {
-                teamMember.DefaultReviewer = userId;
-                teamMember.HasReports = hasReports;
-            }
+            teamMember.DefaultReviewer = userId;
+            teamMember.HasReports = hasReports;
 
             await _database.SaveChangesAsync();
             var homeBlocks = await _components.ShowAppHome.HomeTab(teamId, userId);

@@ -34,9 +34,7 @@ namespace Gratify.Api.Components.HomeTabs
 
         public async Task<HomeTab> HomeTab(string teamId, string userId)
         {
-            var user = await _database.Users.SingleOrDefaultAsync(user => user.UserId == userId);
-            user ??= new User(teamId, userId);
-
+            var user = await _database.Users.SingleAsync(user => user.UserId == userId);
             var yourTeamSection = YourTeamSection(user);
             var teamReviewerSection = TeamReviewerSection(user);
             var teamMembersSection = await TeamMembersSection(user);
@@ -93,9 +91,7 @@ namespace Gratify.Api.Components.HomeTabs
 
         private async Task OpenAddTeamMember(string triggerId, string teamId, string userId)
         {
-            var user = await _database.Users.SingleOrDefaultAsync(user => user.UserId == userId);
-            user ??= new User(teamId, userId);
-
+            var user = await _database.Users.SingleAsync(user => user.UserId == userId);
             var modal = _components.AddTeamMember.Modal(user);
             await _slackService.OpenModal(triggerId, modal);
         }
