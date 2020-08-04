@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.Json;
@@ -127,6 +129,35 @@ namespace Slack.Client
 
             using var streamReader = new StreamReader(contentStream);
             return await streamReader.ReadToEndAsync();
+        }
+
+        // TODO: Does this actually get users from all different teams?
+        // https://api.slack.com/methods/users.list
+        public async IAsyncEnumerable<User> GetUsers()
+        {
+            var limit = 200;
+            var includeLocale = false;
+            var cursor = string.Empty;
+            do
+            {
+                var page = await GetUsersPage(limit, includeLocale,  cursor);
+                foreach (var user in page.Members)
+                {
+                    yield return user;
+                }
+
+                cursor = page.Metadata.NextCursor;
+            }
+            while (cursor != string.Empty);
+        }
+
+        private async Task<Paginated<User>> GetUsersPage(int limit, bool includeLocale, string cursor)
+        {
+            var url = $"{SlackApiUrl}/users.list?include_locale={includeLocale}&limit={limit}&cursor={WebUtility.UrlEncode(cursor)}";
+            using var response = await _httpClient.GetAsync(url);
+            var contentStream = await response.Content.ReadAsStreamAsync();
+
+            return await JsonSerializer.DeserializeAsync<Paginated<User>>(contentStream);
         }
     }
 }
