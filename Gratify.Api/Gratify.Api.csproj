@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Slack.Client/Slack.Client.csproj" />
+    <ProjectReference Include="../Iso20022/Iso20022.csproj" />
   </ItemGroup>
 
 </Project>
