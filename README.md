@@ -135,3 +135,18 @@ Now you can run Gratify.Api, and it'll try to apply the migrations in the same w
 _**Beware:** Setting `ApplyMigrations` to `true` while running the API against a database will migrate the database. This should be done with caution, since it can crash the already deployed version of the API, or irreversibly destroy data._
 
 When you're done debugging, you'll usually want to [revert the migration](https://docs.microsoft.com/en-us/ef/core/managing-schemas/migrations/?tabs=dotnet-core-cli#revert-a-migration), so the actual migration will be preformed during the release.
+
+### Generating classes from ISO 20022 contracts
+In order to generate new .NET classes from the different [ISO 20022](https://www.iso20022.org/) contracts, you can use [XmlSchemaClassGenerator](https://github.com/mganss/XmlSchemaClassGenerator). This tool can be installed as a dotnet tool using:
+
+```shell
+$> dotnet tool install --global dotnet-xscgen --version 2.0.444
+```
+
+With this tool installed, you simply have to navigate and/or create a suitable folder under the `Iso20022` project, and then use the command `xscgen` as shown below:
+
+```shell
+$ Iso20022/Pain/V3> xscgen --namespace "urn:iso:std:iso:20022:tech:xsd:pain.001.001.03=Iso20022.Pain.V3" pain.001.001.03.xsd
+```
+
+If you whish to view the contents of a ISO 20022 XSD contract, you can use the online tool [SchemaViewer](http://www.xml-tools.net/schemaviewer.html).
