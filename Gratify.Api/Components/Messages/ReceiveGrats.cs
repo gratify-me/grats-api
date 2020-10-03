@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Gratify.Api.Database;
 using Gratify.Api.Database.Entities;
@@ -5,9 +8,10 @@ using Microsoft.ApplicationInsights;
 using Microsoft.EntityFrameworkCore;
 using Slack.Client;
 using Slack.Client.BlockKit.BlockElements;
+using Slack.Client.BlockKit.CompositionObjects;
 using Slack.Client.BlockKit.LayoutBlocks;
 using Slack.Client.Chat;
-using Slack.Client.Interactions;
+using Action = Slack.Client.Interactions.Action;
 
 namespace Gratify.Api.Components.Messages
 {
@@ -28,40 +32,14 @@ namespace Gratify.Api.Components.Messages
             _components = components;
         }
 
-        public PostMessage Message(Approval approval) =>
-            new PostMessage(
-                text: $"Congratulations! <@{approval.Review.Grats.Author}> just sent you grats 🎉",
-                blocks: new LayoutBlock[]
-                {
-                    new Section(
-                        id: "GratsReceived",
-                        text: "*You've Got Grats* :mailbox:"),
+        public async Task<PostMessage> Message(Approval approval)
+        {
+            var baseBlocks = await BaseBlocks(approval);
 
-                    new Divider(),
-
-                    new Section(
-                        id: "Congratulations",
-                        text: $"Congratulations! <@{approval.Review.Grats.Author}> just sent you grats 🎉"),
-
-                    new Section(
-                        id: "Challenge",
-                        text: $"_*Challenge:*_ _{approval.Review.Grats.Challenge}_"),
-
-                    new Section(
-                        id: "Action",
-                        text: $"_*Action:*_ _{approval.Review.Grats.Action}_"),
-
-                    new Section(
-                        id: "Result",
-                        text: $"_*Result:*_ _{approval.Review.Grats.Result}_"),
-
-                    new Section(
-                        id: "AccountInformation",
-                        text: "Would you like kr 1500;- to be transferred to your Vipps account using phone number 413 10 992?"),
-
-                    new Divider(),
-
-                    new Actions(
+            return new PostMessage(
+                text: Congratulations(approval),
+                blocks: baseBlocks
+                    .Append(new Actions(
                         id: "TransferOrChangeDetails",
                         elements: new Button[]
                         {
@@ -71,52 +49,98 @@ namespace Gratify.Api.Components.Messages
                                 text: "Yes!",
                                 style: ButtonStyle.Primary),
 
-                            new Button(
-                                id: _changeAccountDetails,
-                                correlationId: approval.CorrelationId,
-                                text: "I would like to change my account details first."),
-                        }),
-                });
+                            // TODO: Currently only one option
+                            // new Button(
+                            //     id: _changeAccountDetails,
+                            //     correlationId: approval.CorrelationId,
+                            //     text: "I would like to change my account details first."),
+                        }))
+                    .ToArray());
+        }
+
+        public async Task<UpdateMessage> UpdateReceived(Receival receival)
+        {
+            return await UpdateMessage(receival.Approval, new MrkdwnText[]
+            {
+                new MrkdwnText($"Account number registered! Working on transfering you the money :money_with_wings:")
+            });
+        }
 
         public async Task OnSubmit(Action action, string triggerId)
         {
-            var receival = new Receival(
-                correlationId: action.CorrelationId,
-                receivedAt: System.DateTime.UtcNow);
-
             if (action.ActionId == _transferToAccount)
             {
-                await TransferToAccount(receival);
+                await TransferToAccount(action.CorrelationId, triggerId);
             }
             else if (action.ActionId == _changeAccountDetails)
             {
-                await ChangeAccountDetails(receival);
+                await OpenRegisterAccountDetails(action.CorrelationId, triggerId);
             }
         }
 
-        public async Task TransferToAccount(Receival receival) => await ChangeAccountDetails(receival);
+        // TODO: We should be able to re-use account information
+        private async Task TransferToAccount(Guid correlationId, string triggerId) => await OpenRegisterAccountDetails(correlationId, triggerId);
 
-        public async Task ChangeAccountDetails(Receival receival)
+        private async Task OpenRegisterAccountDetails(Guid correlationId, string triggerId)
         {
-            var approval = await _database.Approvals
-                .Include(approval => approval.Review)
-                    .ThenInclude(review => review.Grats)
-                .SingleOrDefaultAsync(approval => approval.CorrelationId == receival.CorrelationId);
+            var modal = _components.RegisterAccountDetails.Modal(correlationId);
+            await _slackService.OpenModal(triggerId, modal);
+        }
 
-            if (approval == default)
+        private string Congratulations(Approval approval) => $"Congratulations! <@{approval.Review.Grats.Author}> just sent you grats 🎉";
+
+        private async Task<UpdateMessage> UpdateMessage(Approval approval, MrkdwnText[] updates)
+        {
+            var baseBlocks = await BaseBlocks(approval);
+
+            return new UpdateMessage(
+                text: Congratulations(approval),
+                blocks: baseBlocks
+                    .Append(new Context(updates))
+                    .ToArray(),
+                originalMessage: approval.ReceiverNotification);
+        }
+
+        private async Task<List<LayoutBlock>> BaseBlocks(Approval approval)
+        {
+            var settings = await _database.Settings.SingleOrDefaultAsync(setting => setting.TeamId == approval.TeamId);
+            var amount = $"kr {settings.AmountPerGrats};-";
+            if (settings == default)
             {
-                _telemetry.TrackEntity($"{nameof(ChangeAccountDetails)}: Approval not found", approval);
-                return;
+                _telemetry.TrackCorrelationId($"{nameof(ReceiveGrats)}: Settings not found", approval.CorrelationId);
+                amount = "some money";
             }
 
-            receival.Approval = approval;
-            receival.TeamId = approval.TeamId;
+            return new List<LayoutBlock>
+            {
+                new Section(
+                        id: "GratsReceived",
+                        text: "*You've Got Grats* :mailbox:"),
 
-            var notifyReviewer = _components.ReviewGrats.UpdateReceived(receival);
-            await _slackService.UpdateMessage(notifyReviewer);
+                new Divider(),
 
-            var notifyAuthor = _components.NotifyGratsSent.UpdateReceived(receival);
-            await _slackService.UpdateMessage(notifyAuthor);
+                new Section(
+                    id: "Congratulations",
+                    text: $"Congratulations! <@{approval.Review.Grats.Author}> just sent you grats 🎉"),
+
+                new Section(
+                    id: "Challenge",
+                    text: $"_*Challenge:*_ _{approval.Review.Grats.Challenge}_"),
+
+                new Section(
+                    id: "Action",
+                    text: $"_*Action:*_ _{approval.Review.Grats.Action}_"),
+
+                new Section(
+                    id: "Result",
+                    text: $"_*Result:*_ _{approval.Review.Grats.Result}_"),
+
+                new Section(
+                    id: "AccountInformation",
+                    text: $"Would you like {amount} to be transferred to your bank account?"),
+
+                new Divider(),
+            };
         }
     }
 }

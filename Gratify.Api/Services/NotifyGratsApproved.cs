@@ -36,20 +36,21 @@ namespace Gratify.Api.Services
                 var pendingApprovals = await database.Approvals
                     .Include(grats => grats.Review)
                         .ThenInclude(review => review.Grats)
-                    .Where(approval => !approval.IsNotified)
+                    .Where(approval => approval.ReceiverNotificationTimestamp == null)
                     .Take(10)
                     .ToArrayAsync();
 
                 foreach (var approval in pendingApprovals)
                 {
-                    var blocks = components.GratsReceived.Message(approval);
+                    var blocks = await components.GratsReceived.Message(approval);
                     var channel = await _slackService.GetAppChannel(approval.Review.Grats.Recipient);
                     blocks.Channel = channel.Id;
-                    await _slackService.SendMessage(blocks);
+                    var receiverNotification = await _slackService.SendMessage(blocks);
+                    approval.SetReceiverNotification(receiverNotification);
 
                     var notifyAuthor = components.NotifyGratsSent.UpdateApproved(approval);
                     await _slackService.UpdateMessage(notifyAuthor);
-                    approval.IsNotified = true;
+
                     await database.SaveChangesAsync();
                 }
 

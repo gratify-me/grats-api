@@ -4,14 +4,16 @@ using Gratify.Api.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Gratify.Api.Migrations
 {
     [DbContext(typeof(GratsDb))]
-    partial class GratsDbModelSnapshot : ModelSnapshot
+    [Migration("20201003031817_ReceiverNameAndAccountNumber")]
+    partial class ReceiverNameAndAccountNumber
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -32,11 +34,8 @@ namespace Gratify.Api.Migrations
                     b.Property<Guid>("CorrelationId")
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("ReceiverNotificationChannel")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ReceiverNotificationTimestamp")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<bool>("IsNotified")
+                        .HasColumnType("bit");
 
                     b.Property<int>("ReviewId")
                         .HasColumnType("int");

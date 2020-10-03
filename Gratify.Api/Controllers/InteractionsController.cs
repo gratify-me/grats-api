@@ -78,6 +78,12 @@ namespace Gratify.Api.Controllers
 
                 return response.Result();
             }
+            else if (modalType == typeof(RegisterAccountDetails))
+            {
+                var response = await _components.RegisterAccountDetails.OnSubmit(submission);
+
+                return response.Result();
+            }
             else if (modalType == typeof(AddTeamMember))
             {
                 var response = await _components.AddTeamMember.OnSubmit(submission);

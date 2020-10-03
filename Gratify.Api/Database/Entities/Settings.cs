@@ -14,6 +14,7 @@ namespace Gratify.Api.Database.Entities
             UpdatedBy = createdBy;
             GratsPeriodInDays = 30;
             NumberOfGratsPerPeriod = 1;
+            AmountPerGrats = 1500;
         }
 
         [Key]

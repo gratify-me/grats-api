@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using Slack.Client.Chat;
 
 namespace Gratify.Api.Database.Entities
 {
@@ -14,13 +15,26 @@ namespace Gratify.Api.Database.Entities
         [Required]
         public DateTime ApprovedAt { get; private set; }
 
+        public string ReceiverNotificationChannel { get; set; }
+
+        public string ReceiverNotificationTimestamp { get; set; }
+
         [Required]
         public int ReviewId { get; set; }
 
         [Required]
         public Review Review { get; set; }
 
-        [Required]
-        public bool IsNotified { get; set; }
+        public ApiResponse ReceiverNotification => new ApiResponse
+        {
+            Channel = ReceiverNotificationChannel,
+            Timestamp = ReceiverNotificationTimestamp,
+        };
+
+        public void SetReceiverNotification(ApiResponse receiverNotification)
+        {
+            ReceiverNotificationChannel = receiverNotification.Channel;
+            ReceiverNotificationTimestamp = receiverNotification.Timestamp;
+        }
     }
 }
