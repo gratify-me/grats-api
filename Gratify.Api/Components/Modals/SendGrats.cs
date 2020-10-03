@@ -76,6 +76,20 @@ namespace Gratify.Api.Components.Modals
                 return new ResponseActionErrors("InputRecipient", "You cannot send grats to yourself");
             }
 
+            var recipientUser = await _database.Users.SingleAsync(user => user.UserId == recipient.SelectedUser.Id);
+            if (recipientUser.IsAdministrator)
+            {
+                return new ResponseActionErrors("InputRecipient", "You cannot send grats to an Administrator");
+            }
+            else if (!recipientUser.IsEligibleForGrats)
+            {
+                return new ResponseActionErrors("InputRecipient", "You cannot send grats to someone who is not eligable to receive Grats");
+            }
+            else if (recipientUser.HasReports)
+            {
+                return new ResponseActionErrors("InputRecipient", "You cannot send grats to a Reviewer");
+            }
+
             var challenge = submission.GetStateValue<PlainTextInput>("InputChallenge.Challenge");
             if (challenge.Value.Length > 300)
             {
