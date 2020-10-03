@@ -33,20 +33,7 @@ namespace Gratify.Api.Test
                 transaction,
             });
 
-            var document = initiation.Document;
-
-            var serializer = new XmlSerializer(typeof(Document));
-            var settings = new XmlWriterSettings
-            {
-                Indent = true,
-                NewLineChars = "\r\n"
-            };
-
-            // using (var writer = XmlWriter.Create($"/home/teodoran/depot/grats-api/Gratify.Api.Test/output/{initiation.FileName()}", settings))
-            // {
-            //     serializer.Serialize(writer, document);
-            // }
-            Assert.True(true);
+            Assert.NotNull(initiation.Document);
         }
     }
 }

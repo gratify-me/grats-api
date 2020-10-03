@@ -69,7 +69,7 @@ namespace Gratify.Api.Services
                 // Since every call to _slackService.GetUsers() potentially
                 // creates more than one request, we shouldn't make this delay to low.
                 // https://api.slack.com/docs/rate-limits#tier_t2
-                await Task.Delay(60000, token);
+                await Task.Delay(320000, token);
             }
         }
 

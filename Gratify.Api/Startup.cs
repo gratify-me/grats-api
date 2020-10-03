@@ -59,19 +59,21 @@ namespace Gratify.Api
             var databaseSettings = Configuration.GetSection("DatabaseSettings").Get<DatabaseSettings>();
             services.AddGratsDb(databaseSettings);
 
-            var storageAccountConnectionString = Configuration.GetValue<string>("StorageAccountConnectionString");
-            services.AddTransient(services => new BlobServiceClient(storageAccountConnectionString));
-
             services.AddScoped<ComponentsService>();
 
             var debitorInformation = Configuration.GetSection("DebitorInformation").Get<DebitorInformation>();
-            services.AddSingleton(debitorInformation);
+            var storageAccountConnectionString = Configuration.GetValue<string>("StorageAccountConnectionString");
+            if (!string.IsNullOrEmpty(storageAccountConnectionString))
+            {
+                services.AddSingleton(debitorInformation);
+                services.AddTransient(services => new BlobServiceClient(storageAccountConnectionString));
+                services.AddHostedService<InitiateCreditTransfer>();
+            }
 
             services.AddHostedService<SubmitGratsForReview>();
             services.AddHostedService<NotifyGratsApproved>();
             services.AddHostedService<NotifyGratsDenied>();
             services.AddHostedService<NotifyReviewForwarded>();
-            services.AddHostedService<InitiateCreditTransfer>();
             services.AddHostedService<ImportUsers>();
         }
 
