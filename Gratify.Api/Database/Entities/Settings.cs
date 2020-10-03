@@ -47,5 +47,9 @@ namespace Gratify.Api.Database.Entities
         [Required]
         [Range(0, 100)]
         public int NumberOfGratsPerPeriod { get; set; }
+
+        [Required]
+        [Range(0, 10000)]
+        public int AmountPerGrats { get; set; }
     }
 }
