@@ -49,8 +49,8 @@ namespace Gratify.Api.Services
                         var newUser = new User(
                             teamId: slackUser.TeamId,
                             userId: slackUser.Id,
-                            isEligibleForGrats: true,
-                            isAdministrator: true,
+                            isEligibleForGrats: IsEligibleForGrats(slackUser),
+                            isAdministrator: IsAdministrator(slackUser),
                             updatedAt: slackUser.Updated);
 
                         await database.Users.AddAsync(newUser);
