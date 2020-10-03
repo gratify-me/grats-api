@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -35,6 +36,7 @@ namespace Gratify.Api.Components.HomeTabs
         public async Task<HomeTab> HomeTab(string teamId, string userId)
         {
             var user = await _database.Users.SingleAsync(user => user.UserId == userId);
+            var keyMetrics = await KeyMetrics();
             var yourTeamSection = YourTeamSection(user);
             var teamReviewerSection = TeamReviewerSection(user);
             var teamMembersSection = await TeamMembersSection(user);
@@ -52,6 +54,7 @@ namespace Gratify.Api.Components.HomeTabs
             return new HomeTab
             {
                 Blocks = new List<LayoutBlock>()
+                    .Append(keyMetrics)
                     .Append(homeActions)
                     .Append(yourTeamSection)
                     .Append(new Divider())
@@ -115,6 +118,16 @@ namespace Gratify.Api.Components.HomeTabs
             var settings = await _database.SettingsFor(teamId, userId);
             var modal = _components.ChangeSettings.Modal(settings);
             await _slackService.OpenModal(triggerId, modal);
+        }
+
+        private async Task<Header> KeyMetrics()
+        {
+            var noOfGratsSent = await _database.Grats.CountAsync();
+            var noOfApprovedGrats = await _database.Approvals.CountAsync();
+            var approvedPercentage = noOfGratsSent == 0 ? 0 : Math.Round(noOfApprovedGrats / (double)noOfGratsSent * 100.0);
+            var amountOfMoneyReceived = await _database.Receivals.SumAsync(receival => receival.AmountReceived);
+
+            return new Header($":grats: {noOfGratsSent} Grats Sent ({approvedPercentage}% approved)\n:moneybag: {amountOfMoneyReceived} kr received");
         }
 
         private Section YourTeamSection(User user)
