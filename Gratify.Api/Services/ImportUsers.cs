@@ -74,7 +74,7 @@ namespace Gratify.Api.Services
         }
 
         private bool IsEligibleForGrats(Slack.Client.Primitives.User slackUser) =>
-            slackUser.IsAppUser &&
+            slackUser.Id != "USLACKBOT" && // slackbot has IsBot = true for some reason.
             !slackUser.IsBot &&
             !slackUser.IsRestricted &&
             !slackUser.IsUltraRestricted;
