@@ -1,3 +1,4 @@
+using System;
 using System.Xml;
 using System.Xml.Serialization;
 using Iso20022.Pain;
@@ -22,6 +23,7 @@ namespace Gratify.Api.Test
             };
 
             var transaction = new CreditTransaction(
+                correlationId: Guid.NewGuid(),
                 creditorName: "Astri Iversen",
                 creditorAccount: "12345678911",
                 amountNok: 5);
