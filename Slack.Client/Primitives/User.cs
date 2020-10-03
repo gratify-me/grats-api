@@ -39,6 +39,12 @@ namespace Slack.Client.Primitives
         public string TeamId { get; set; }
 
         /// <summary>
+        /// The real name of the user.
+        /// </summary>
+        [JsonPropertyName("real_name")]
+        public string RealName { get; set; }
+
+        /// <summary>
         /// This user has been deactivated when the value of this field is true.
         /// Otherwise the value is false, or the field may not appear at all.
         /// </summary>
