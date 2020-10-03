@@ -55,13 +55,7 @@ namespace Gratify.Api.Components.Modals
                 return new ResponseActionErrors("InputReceiverAccountNumber", $"{accountNumberInput.Value} is not a valid Norwegian account number");
             }
 
-            var receival = new Receival(
-                correlationId: submission.CorrelationId,
-                receivedAt: System.DateTime.UtcNow,
-                receiverName: submission.User.RealName, // TODO: We're not guaranteed to get this. Will transfer still work then?
-                receiverAccountNumber: accountNumber);
-
-            await SubmitAccountDetails(receival);
+            await SubmitAccountDetails(submission, accountNumber);
 
             return new ResponseActionClose();
         }
@@ -71,21 +65,33 @@ namespace Gratify.Api.Components.Modals
 
         private string RemoveWhitespace(string s) => Regex.Replace(s, @"\s+", string.Empty);
 
-        private async Task SubmitAccountDetails(Receival receival)
+        private async Task SubmitAccountDetails(ViewSubmission submission, string accountNumber)
         {
             var approval = await _database.Approvals
                 .Include(approval => approval.Review)
                     .ThenInclude(review => review.Grats)
-                .SingleOrDefaultAsync(approval => approval.CorrelationId == receival.CorrelationId);
+                .SingleOrDefaultAsync(approval => approval.CorrelationId == submission.CorrelationId);
 
             if (approval == default)
             {
-                _telemetry.TrackEntity($"{nameof(RegisterAccountDetails)}: Approval not found", receival);
+                _telemetry.TrackCorrelationId($"{nameof(RegisterAccountDetails)}: Approval not found", submission.CorrelationId);
                 return;
             }
 
-            receival.Approval = approval;
-            receival.TeamId = approval.TeamId;
+            var settings = await _database.Settings.SingleAsync(setting => setting.TeamId == submission.Team.Id);
+            var receival = new Receival(
+                correlationId: submission.CorrelationId,
+                receivedAt: System.DateTime.UtcNow,
+                receiverName: submission.User.RealName, // TODO: We're not guaranteed to get this. Will transfer still work then?
+                receiverAccountNumber: accountNumber,
+                amountReceived: settings.AmountPerGrats)
+            {
+                Approval = approval,
+                TeamId = approval.TeamId,
+            };
+
+            await _database.Receivals.AddAsync(receival);
+            await _database.SaveChangesAsync();
 
             var notifyReviewer = _components.ReviewGrats.UpdateReceived(receival);
             await _slackService.UpdateMessage(notifyReviewer);

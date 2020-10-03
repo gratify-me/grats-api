@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using Gratify.Api.Components;
 using Gratify.Api.Database;
 using Gratify.Api.Services;
+using Iso20022.Pain;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -59,10 +60,14 @@ namespace Gratify.Api
 
             services.AddScoped<ComponentsService>();
 
+            var debitorInformation = Configuration.GetSection("DebitorInformation").Get<DebitorInformation>();
+            services.AddSingleton(debitorInformation);
+
             services.AddHostedService<SubmitGratsForReview>();
             services.AddHostedService<NotifyGratsApproved>();
             services.AddHostedService<NotifyGratsDenied>();
             services.AddHostedService<NotifyReviewForwarded>();
+            services.AddHostedService<InitiateCreditTransfer>();
             services.AddHostedService<ImportUsers>();
         }
 

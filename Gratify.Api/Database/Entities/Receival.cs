@@ -5,12 +5,13 @@ namespace Gratify.Api.Database.Entities
 {
     public class Receival : Entity
     {
-        public Receival(Guid correlationId, DateTime receivedAt, string receiverName, string receiverAccountNumber)
+        public Receival(Guid correlationId, DateTime receivedAt, string receiverName, string receiverAccountNumber, int amountReceived)
         {
             CorrelationId = correlationId;
             ReceivedAt = receivedAt;
             ReceiverName = receiverName;
             ReceiverAccountNumber = receiverAccountNumber;
+            AmountReceived = amountReceived;
         }
 
         [Required]
@@ -23,6 +24,11 @@ namespace Gratify.Api.Database.Entities
         // https://www.datatilsynet.no/personvern-pa-ulike-omrader/kundehandtering-handel-og-medlemskap/nettbutikker-og-kundeopplysninger/
         [Required]
         public string ReceiverAccountNumber { get; set; }
+
+        [Required]
+        public int AmountReceived { get; set; }
+
+        public bool CreditTransferInitiated { get; set; }
 
         [Required]
         public int ApprovalId { get; set; }
