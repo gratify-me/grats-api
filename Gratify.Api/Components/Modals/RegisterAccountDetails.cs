@@ -82,7 +82,7 @@ namespace Gratify.Api.Components.Modals
             var receival = new Receival(
                 correlationId: submission.CorrelationId,
                 receivedAt: System.DateTime.UtcNow,
-                receiverName: submission.User.RealName, // TODO: We're not guaranteed to get this. Will transfer still work then?
+                receiverName: submission.User.Id, // TODO: RealName is not available her. What can we do to amend this?
                 receiverAccountNumber: accountNumber,
                 amountReceived: settings.AmountPerGrats)
             {

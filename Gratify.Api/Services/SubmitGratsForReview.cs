@@ -44,7 +44,7 @@ namespace Gratify.Api.Services
                     await RequestReview(database, components, grats);
                 }
 
-                await Task.Delay(1000, token);
+                await Task.Delay(5000, token);
             }
         }
 

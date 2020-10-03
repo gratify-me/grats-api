@@ -48,7 +48,7 @@ namespace Gratify.Api.Services
                     await database.SaveChangesAsync();
                 }
 
-                await Task.Delay(1000, token);
+                await Task.Delay(5000, token);
             }
         }
     }

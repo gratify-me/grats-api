@@ -145,6 +145,8 @@ namespace Gratify.Api.Components.Messages
                 correlationId: correlationId,
                 approvedAt: DateTime.UtcNow);
 
+            // TODO: There seems to be a possibility of generating two of every entity, due to Slack retries.
+            // Should check more on correlationId.
             var review = await _database.IncompleteReviews.SingleOrDefaultAsync(review => review.CorrelationId == approval.CorrelationId);
             if (review == default)
             {

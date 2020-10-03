@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using Azure.Storage.Blobs;
 using Gratify.Api.Components;
 using Gratify.Api.Database;
 using Gratify.Api.Services;
@@ -57,6 +58,9 @@ namespace Gratify.Api
 
             var databaseSettings = Configuration.GetSection("DatabaseSettings").Get<DatabaseSettings>();
             services.AddGratsDb(databaseSettings);
+
+            var storageAccountConnectionString = Configuration.GetValue<string>("StorageAccountConnectionString");
+            services.AddTransient(services => new BlobServiceClient(storageAccountConnectionString));
 
             services.AddScoped<ComponentsService>();
 
