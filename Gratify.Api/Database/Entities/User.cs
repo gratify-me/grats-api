@@ -33,5 +33,8 @@ namespace Gratify.Api.Database.Entities
 
         [Required]
         public bool HasReports { get; set; }
+
+        [MaxLength(11)]
+        public string AccountNumber { get; set; }
     }
 }
