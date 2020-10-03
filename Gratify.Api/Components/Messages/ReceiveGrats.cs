@@ -47,13 +47,7 @@ namespace Gratify.Api.Components.Messages
                                 id: _transferToAccount,
                                 correlationId: approval.CorrelationId,
                                 text: "Yes!",
-                                style: ButtonStyle.Primary),
-
-                            // TODO: Currently only one option
-                            // new Button(
-                            //     id: _changeAccountDetails,
-                            //     correlationId: approval.CorrelationId,
-                            //     text: "I would like to change my account details first."),
+                                style: ButtonStyle.Primary)
                         }))
                     .ToArray());
         }
@@ -66,24 +60,9 @@ namespace Gratify.Api.Components.Messages
             });
         }
 
-        public async Task OnSubmit(Action action, string triggerId)
+        public async Task OnSubmit(Action action, string triggerId, string userId)
         {
-            if (action.ActionId == _transferToAccount)
-            {
-                await TransferToAccount(action.CorrelationId, triggerId);
-            }
-            else if (action.ActionId == _changeAccountDetails)
-            {
-                await OpenRegisterAccountDetails(action.CorrelationId, triggerId);
-            }
-        }
-
-        // TODO: We should be able to re-use account information
-        private async Task TransferToAccount(Guid correlationId, string triggerId) => await OpenRegisterAccountDetails(correlationId, triggerId);
-
-        private async Task OpenRegisterAccountDetails(Guid correlationId, string triggerId)
-        {
-            var modal = _components.RegisterAccountDetails.Modal(correlationId);
+            var modal = await _components.RegisterAccountDetails.Modal(action.CorrelationId, userId);
             await _slackService.OpenModal(triggerId, modal);
         }
 

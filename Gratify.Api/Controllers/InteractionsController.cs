@@ -120,7 +120,7 @@ namespace Gratify.Api.Controllers
             }
             else if (action.ActionId.Contains(typeof(ReceiveGrats).ToString()))
             {
-                await _components.GratsReceived.OnSubmit(action, triggerId);
+                await _components.GratsReceived.OnSubmit(action, triggerId, userId);
             }
             else if (action.ActionId.Contains(typeof(ShowAppHome).ToString()))
             {

@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Gratify.Api.Database;
@@ -7,6 +8,7 @@ using Microsoft.ApplicationInsights;
 using Microsoft.EntityFrameworkCore;
 using Slack.Client;
 using Slack.Client.BlockKit.BlockElements;
+using Slack.Client.BlockKit.CompositionObjects;
 using Slack.Client.BlockKit.LayoutBlocks;
 using Slack.Client.Interactions;
 using Slack.Client.Views;
@@ -28,8 +30,11 @@ namespace Gratify.Api.Components.Modals
             _components = components;
         }
 
-        public Modal Modal(Guid correlationId) =>
-            new Modal(
+        public async Task<Modal> Modal(Guid correlationId, string userId)
+        {
+            var user = await _database.Users.SingleAsync(user => user.UserId == userId);
+
+            return new Modal(
                 id: typeof(RegisterAccountDetails),
                 correlationId: correlationId,
                 title: $"Register Account Number",
@@ -43,8 +48,16 @@ namespace Gratify.Api.Components.Modals
                         element: new PlainTextInput(
                             id: "AccountNumber",
                             placeholder: "11-digit Norwegian bank account number",
+                            initialValue: user.AccountNumber,
                             multiline: false)),
+
+                    new Input(
+                        id: "InputSaveAccountNumber",
+                        label: "Save account number for future Grats?",
+                        element: SelectSaveAccountNumber(user),
+                        optional: true),
                 });
+        }
 
         public async Task<ResponseAction> OnSubmit(ViewSubmission submission)
         {
@@ -55,7 +68,10 @@ namespace Gratify.Api.Components.Modals
                 return new ResponseActionErrors("InputReceiverAccountNumber", $"{accountNumberInput.Value} is not a valid Norwegian account number");
             }
 
-            await SubmitAccountDetails(submission, accountNumber);
+            var saveAccountNumberInput = submission.GetStateValue<CheckboxGroup>("InputSaveAccountNumber.SaveAccountNumber");
+            var saveAccountNumber = saveAccountNumberInput?.SelectedOptions?.Any(option => option == Option.Yes);
+
+            await SubmitAccountDetails(submission, accountNumber, saveAccountNumber.Value);
 
             return new ResponseActionClose();
         }
@@ -65,7 +81,7 @@ namespace Gratify.Api.Components.Modals
 
         private string RemoveWhitespace(string s) => Regex.Replace(s, @"\s+", string.Empty);
 
-        private async Task SubmitAccountDetails(ViewSubmission submission, string accountNumber)
+        private async Task SubmitAccountDetails(ViewSubmission submission, string accountNumber, bool saveAccountNumber = false)
         {
             var approval = await _database.Approvals
                 .Include(approval => approval.Review)
@@ -78,10 +94,13 @@ namespace Gratify.Api.Components.Modals
                 return;
             }
 
+            var user = await _database.Users.SingleAsync(user => user.UserId == submission.User.Id);
+            user.AccountNumber = saveAccountNumber ? accountNumber : null;
+
             var settings = await _database.Settings.SingleAsync(setting => setting.TeamId == submission.Team.Id);
             var receival = new Receival(
                 correlationId: submission.CorrelationId,
-                receivedAt: System.DateTime.UtcNow,
+                receivedAt: DateTime.UtcNow,
                 receiverName: submission.User.Id, // TODO: RealName is not available her. What can we do to amend this?
                 receiverAccountNumber: accountNumber,
                 amountReceived: settings.AmountPerGrats)
@@ -101,6 +120,21 @@ namespace Gratify.Api.Components.Modals
 
             var notifyReceiver = await _components.GratsReceived.UpdateReceived(receival);
             await _slackService.UpdateMessage(notifyReceiver);
+        }
+
+        private CheckboxGroup SelectSaveAccountNumber(User user)
+        {
+            if (user.AccountNumber != null)
+            {
+                return new CheckboxGroup(
+                    id: "SaveAccountNumber",
+                    options: new Option[] { Option.Yes },
+                    initialOption: Option.Yes);
+            }
+
+            return new CheckboxGroup(
+                id: "SaveAccountNumber",
+                options: new Option[] { Option.Yes });
         }
     }
 }
