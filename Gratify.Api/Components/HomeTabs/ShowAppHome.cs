@@ -192,7 +192,7 @@ namespace Gratify.Api.Components.HomeTabs
             {
                 return new Section(
                     id: user.UserId,
-                    text: $"*<@{user.UserId}>*",
+                    text: $"*<@{user.UserId}>*{(user.HasReports ? $" _reviewer_" : string.Empty)}",
                     accessory: new Button(
                         id: _removeTeamMember,
                         value: user.Id.ToString(),

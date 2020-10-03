@@ -18,6 +18,7 @@ namespace Slack.Client.Chat
 
         // In addition to channel and ts, the responce contains the message that was sent.
         // The message property is currently not mapped.
+
         /// <summary>
         /// Channel the message was sent to. Only available when Ok is true.
         /// </summary>
