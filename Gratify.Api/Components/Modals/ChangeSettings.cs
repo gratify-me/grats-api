@@ -67,23 +67,43 @@ namespace Gratify.Api.Components.Modals
                     new Section(
                         id: "SelectNumberOfGratsInfo",
                         text: "The number of Grats a user can send every period"),
+
+                    new Input(
+                        id: "SelectAmountPerGrats",
+                        label: ":moneybag: Amount of money per Grats",
+                        element: new StaticSelect(
+                            id: "AmountPerGrats",
+                            initialOption: new Option(settings.AmountPerGrats.ToString()),
+                            options: new Option[]
+                            {
+                                new Option("0"),
+                                new Option("50"),
+                                new Option("1500"),
+                                new Option("3000"),
+                            })),
+
+                    new Section(
+                        id: "SelectAmountPerGratsInfo",
+                        text: "The amount of money a user receives as part of the Grats"),
                 });
 
         public async Task<ResponseAction> OnSubmit(ViewSubmission submission)
         {
             var gratsPeriodInDays = submission.GetStateValue<StaticSelect>("SelectGratsPeriod.GratsPeriodInDays");
             var numberOfGratsPerPeriod = submission.GetStateValue<StaticSelect>("SelectNumberOfGrats.NumberOfGratsPerPeriod");
+            var amountPerGrats = submission.GetStateValue<StaticSelect>("SelectAmountPerGrats.AmountPerGrats");
 
             await SaveNewSettings(
                 teamId: submission.Team.Id,
                 userId: submission.User.Id,
                 gratsPeriodInDays: int.Parse(gratsPeriodInDays.SelectedOption.Value),
-                numberOfGratsPerPeriod: int.Parse(numberOfGratsPerPeriod.SelectedOption.Value));
+                numberOfGratsPerPeriod: int.Parse(numberOfGratsPerPeriod.SelectedOption.Value),
+                amountPerGrats: int.Parse(amountPerGrats.SelectedOption.Value));
 
             return new ResponseActionClose();
         }
 
-        public async Task SaveNewSettings(string teamId, string userId, int gratsPeriodInDays, int numberOfGratsPerPeriod)
+        public async Task SaveNewSettings(string teamId, string userId, int gratsPeriodInDays, int numberOfGratsPerPeriod, int amountPerGrats)
         {
             var settings = await _database.Settings.SingleOrDefaultAsync(setting => setting.TeamId == teamId);
             if (settings == default)
@@ -94,6 +114,7 @@ namespace Gratify.Api.Components.Modals
 
             settings.GratsPeriodInDays = gratsPeriodInDays;
             settings.NumberOfGratsPerPeriod = numberOfGratsPerPeriod;
+            settings.AmountPerGrats = amountPerGrats;
             settings.UpdatedAt = DateTime.UtcNow;
             settings.UpdatedBy = userId;
 
