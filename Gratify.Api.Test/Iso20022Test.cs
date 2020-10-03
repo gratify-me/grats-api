@@ -15,7 +15,7 @@ namespace Gratify.Api.Test
             {
                 Name = "INITECH AS",
                 OrgNr = 123456789,
-                AccountNumber = 11987654321,
+                AccountNumber = "11987654321",
                 BankBusinessRegistryCode = "DEVTESTCODE",
                 BankFileTransferId = 1010,
                 CustomerFileTransferId = "SWEDANOR",
@@ -23,7 +23,7 @@ namespace Gratify.Api.Test
 
             var transaction = new CreditTransaction(
                 creditorName: "Astri Iversen",
-                creditorAccount: 12345678911,
+                creditorAccount: "12345678911",
                 amountNok: 5);
 
             var initiation = new TransferInitiation(debitor, new CreditTransaction[]

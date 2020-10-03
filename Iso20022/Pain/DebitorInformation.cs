@@ -8,7 +8,7 @@ namespace Iso20022.Pain
 
         public int OrgNr { get; set; }
 
-        public long AccountNumber { get; set; }
+        public string AccountNumber { get; set; }
 
         public string BankBusinessRegistryCode { get; set; }
 

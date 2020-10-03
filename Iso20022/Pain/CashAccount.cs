@@ -4,14 +4,14 @@ namespace Iso20022.Pain
 {
     public static class CashAccount
     {
-        public static CashAccount16 FromAccountNumber(long accountNumber)
+        public static CashAccount16 FromAccountNumber(string accountNumber)
         {
             var schemeName = new AccountSchemeName1Choice();
             schemeName.Cd = "BBAN"; // Basic Bank Account Number (As defined in ExternalCodeSets_2Q2020_August2020_v1)
 
             var identification = new GenericAccountIdentification1();
             identification.SchmeNm = schemeName;
-            identification.Id = accountNumber.ToString();
+            identification.Id = accountNumber;
 
             var choice = new AccountIdentification4Choice();
             choice.Othr = identification;

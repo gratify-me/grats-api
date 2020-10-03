@@ -7,7 +7,7 @@ namespace Iso20022.Pain
     {
         public CreditTransferTransactionInformation10 Transaction { get; }
 
-        public CreditTransaction(string creditorName, long creditorAccount, int amountNok)
+        public CreditTransaction(string creditorName, string creditorAccount, int amountNok)
         {
             Transaction = TransferTransaction(
                 identification: PaymentIdentification(Guid.NewGuid()),
