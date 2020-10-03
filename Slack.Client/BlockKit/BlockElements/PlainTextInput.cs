@@ -22,8 +22,17 @@ namespace Slack.Client.BlockKit.BlockElements
         {
             Type = TypeName;
             ActionId = id;
-            Multiline = multiline;
             Placeholder = new PlainText(placeholder);
+            Multiline = multiline;
+        }
+
+        public PlainTextInput(string id, string placeholder, string initialValue, bool multiline = true)
+        {
+            Type = TypeName;
+            ActionId = id;
+            Placeholder = new PlainText(placeholder);
+            InitialValue = initialValue;
+            Multiline = multiline;
         }
 
         /// <summary>
@@ -37,7 +46,7 @@ namespace Slack.Client.BlockKit.BlockElements
         /// The initial value in the plain-text input when it is loaded.
         /// </summary>
         [JsonPropertyName("initial_value")]
-        public PlainText InitialValue { get; set; }
+        public string InitialValue { get; set; }
 
         /// <summary>
         /// Indicates whether the input will be a single line (false) or a larger textarea (true). Defaults to false.

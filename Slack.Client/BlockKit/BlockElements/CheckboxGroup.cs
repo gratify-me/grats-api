@@ -25,6 +25,14 @@ namespace Slack.Client.BlockKit.BlockElements
             Options = options;
         }
 
+        public CheckboxGroup(string id, Option[] options, Option initialOption)
+        {
+            Type = TypeName;
+            ActionId = id;
+            Options = options;
+            InitialOptions = new Option[] { initialOption };
+        }
+
         /// <summary>
         /// An array of option objects.
         /// </summary>
