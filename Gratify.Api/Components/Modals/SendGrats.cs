@@ -128,17 +128,19 @@ namespace Gratify.Api.Components.Modals
         {
             var correlationId = Guid.NewGuid();
             var settings = await _database.SettingsFor(teamId, authorId);
-            // TODO: Include pending grats as well to avoid over-sending.
-            var approvedGratsLastPeriod = _database.Approvals
-                .Select(approval => approval.Review.Grats)
+            var pendingAndApprovedGratsLastPeriod = _database.Grats
                 .Where(grats => grats.Author == authorId)
                 .Where(grats => grats.CreatedAt > DateTime.UtcNow.AddDays(-settings.GratsPeriodInDays))
+                .Where(grats =>
+                    !grats.Reviews.Any()
+                    || grats.Reviews.Any(review => review.Approval != null)
+                    || grats.Reviews.All(review => review.Approval == null && review.Denial == null))
                 .OrderByDescending(grats => grats.CreatedAt);
 
-            if (await approvedGratsLastPeriod.CountAsync() >= settings.NumberOfGratsPerPeriod)
+            if (await pendingAndApprovedGratsLastPeriod.CountAsync() >= settings.NumberOfGratsPerPeriod)
             {
-                var lastApprovedGrats = await approvedGratsLastPeriod.FirstAsync();
-                var allGratsSpentModal = _components.AllGratsSpent.Modal(correlationId, lastApprovedGrats.CreatedAt, settings.GratsPeriodInDays);
+                var lastSentGrats = await pendingAndApprovedGratsLastPeriod.FirstAsync();
+                var allGratsSpentModal = _components.AllGratsSpent.Modal(correlationId, lastSentGrats.CreatedAt, settings.GratsPeriodInDays);
                 await _slackService.OpenModal(triggerId, allGratsSpentModal);
             }
             else
