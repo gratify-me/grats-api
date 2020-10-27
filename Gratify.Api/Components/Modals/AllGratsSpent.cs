@@ -26,7 +26,8 @@ namespace Gratify.Api.Components.Modals
                 id: typeof(AllGratsSpent),
                 correlationId: correlationId,
                 title: $"All Grats Spent",
-                submit: "Send anyway",
+                // TODO: Consider if the following should be an option for internal testing.
+                // submit: "Send anyway",
                 close: "Ok",
                 blocks: new LayoutBlock[]
                 {
@@ -38,10 +39,12 @@ namespace Gratify.Api.Components.Modals
 
         public async Task<ResponseAction> OnSubmit(ViewSubmission submission)
         {
+            // TODO: Consider if the following should be an option for internal testing.
+            // var modal = _components.SendGrats.Modal(submission.CorrelationId);
+            // return new ResponseActionPush(modal);
             await Task.CompletedTask;
-            var modal = _components.SendGrats.Modal(submission.CorrelationId);
 
-            return new ResponseActionPush(modal);
+            return new ResponseActionClose();
         }
 
         private int RemainingDays(DateTime lastGratsSentAt, int periodInDays) =>
