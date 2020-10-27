@@ -2,7 +2,6 @@ using System;
 using System.Threading.Tasks;
 using Gratify.Api.Database;
 using Microsoft.ApplicationInsights;
-using Microsoft.EntityFrameworkCore;
 using Slack.Client.BlockKit.LayoutBlocks;
 using Slack.Client.Interactions;
 using Slack.Client.Views;
