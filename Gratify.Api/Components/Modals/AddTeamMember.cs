@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Gratify.Api.Database;
+using Gratify.Api.Database.Entities;
 using Microsoft.ApplicationInsights;
 using Microsoft.EntityFrameworkCore;
 using Slack.Client;
@@ -12,8 +13,6 @@ using Slack.Client.BlockKit.CompositionObjects;
 using Slack.Client.BlockKit.LayoutBlocks;
 using Slack.Client.Interactions;
 using Slack.Client.Views;
-using DbUser = Gratify.Api.Database.Entities.User;
-using User = Slack.Client.Primitives.User;
 
 namespace Gratify.Api.Components.Modals
 {
@@ -32,7 +31,7 @@ namespace Gratify.Api.Components.Modals
             _components = components;
         }
 
-        public Modal Modal(DbUser user)
+        public Modal Modal(User user)
         {
             var blocks = new List<LayoutBlock>
             {
@@ -66,32 +65,40 @@ namespace Gratify.Api.Components.Modals
 
         public async Task<ResponseAction> OnSubmit(ViewSubmission submission)
         {
-            var newTeamMember = submission.GetStateValue<UsersSelect>("InputNewTeamMember.NewTeamMember");
-            if (newTeamMember.SelectedUser == User.Slackbot)
+            var newTeamMemberInput = submission.GetStateValue<UsersSelect>("InputNewTeamMember.NewTeamMember");
+            var newTeamMember = await _database.Users.SingleOrDefaultAsync(user => user.UserId == newTeamMemberInput.SelectedUserId);
+            if (!newTeamMember.IsEligibleForGrats)
             {
-                return new ResponseActionErrors("SelectReceiver", "Slackbot is not a valid user");
+                return new ResponseActionErrors("InputNewTeamMember", "This user cannor receive Grats, and should not be part of any team.");
+            }
+
+            // TODO: Should abstract away this in DbContext. Also, probably need to use TeamId along with UserId to identify users.
+            // TODO: Is it a good idea to block this operation entirely?
+            var currentUser = await _database.Users.SingleOrDefaultAsync(user => user.UserId == submission.User.Id);
+            if (newTeamMember.DefaultReviewer != null && !currentUser.IsAdministrator)
+            {
+                return new ResponseActionErrors("InputNewTeamMember", $"This user is already part of another team.");
             }
 
             var userIsManager = submission.GetStateValue<CheckboxGroup>("InputUserIsManager.UserIsManager");
             var userHasReports = userIsManager?.SelectedOptions?.Any(option => option == Option.Yes);
+
             await SaveNewTeamMember(
-                teamId: submission.Team.Id,
-                userId: submission.User.Id,
-                teamMemberId: newTeamMember.SelectedUserId,
+                newTeamMember: newTeamMember,
+                currentUser: currentUser,
                 hasReports: userHasReports ?? false);
 
             return new ResponseActionClose();
         }
 
-        private async Task SaveNewTeamMember(string teamId, string userId, string teamMemberId, bool hasReports)
+        private async Task SaveNewTeamMember(User newTeamMember, User currentUser, bool hasReports)
         {
-            var teamMember = await _database.Users.SingleOrDefaultAsync(user => user.UserId == teamMemberId);
-            teamMember.DefaultReviewer = userId;
-            teamMember.HasReports = hasReports;
+            newTeamMember.DefaultReviewer = currentUser.UserId;
+            newTeamMember.HasReports = hasReports;
 
             await _database.SaveChangesAsync();
-            var homeBlocks = await _components.ShowAppHome.HomeTab(teamId, userId);
-            await _slackService.PublishModal(userId, homeBlocks);
+            var homeBlocks = await _components.ShowAppHome.HomeTab(currentUser.TeamId, currentUser.UserId);
+            await _slackService.PublishModal(currentUser.UserId, homeBlocks);
         }
     }
 }
