@@ -2,6 +2,7 @@ using Gratify.Api.Components.HomeTabs;
 using Gratify.Api.Components.Messages;
 using Gratify.Api.Components.Modals;
 using Gratify.Api.Database;
+using Gratify.Api.Services;
 using Microsoft.ApplicationInsights;
 using Slack.Client;
 
@@ -31,7 +32,9 @@ namespace Gratify.Api.Components
 
         public ChangeSettings ChangeSettings { get; }
 
-        public ComponentsService(TelemetryClient telemetry, SlackService slackService, GratsDb database)
+        public SendFeedback SendFeedback { get; }
+
+        public ComponentsService(TelemetryClient telemetry, SlackService slackService, GratsDb database, EmailClient emailClient)
         {
             AllGratsSpent = new AllGratsSpent(telemetry, database, this);
             SendGrats = new SendGrats(telemetry, database, slackService, this);
@@ -44,6 +47,7 @@ namespace Gratify.Api.Components
             ShowAppHome = new ShowAppHome(telemetry, database, slackService, this);
             AddTeamMember = new AddTeamMember(telemetry, database, slackService, this);
             ChangeSettings = new ChangeSettings(telemetry, database, slackService, this);
+            SendFeedback = new SendFeedback(telemetry, slackService, emailClient);
         }
     }
 }

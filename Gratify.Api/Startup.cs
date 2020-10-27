@@ -61,6 +61,10 @@ namespace Gratify.Api
 
             services.AddScoped<ComponentsService>();
 
+            var emailSettings = Configuration.GetSection("EmailSettings").Get<EmailSettings>();
+            services.AddSingleton(emailSettings);
+            services.AddTransient<EmailClient>();
+
             var debitorInformation = Configuration.GetSection("DebitorInformation").Get<DebitorInformation>();
             var storageAccountConnectionString = Configuration.GetValue<string>("StorageAccountConnectionString");
             if (!string.IsNullOrEmpty(storageAccountConnectionString))

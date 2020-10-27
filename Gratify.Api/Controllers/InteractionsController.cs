@@ -96,6 +96,12 @@ namespace Gratify.Api.Controllers
 
                 return response.Result();
             }
+            else if (modalType == typeof(SendFeedback))
+            {
+                var response = await _components.SendFeedback.OnSubmit(submission);
+
+                return response.Result();
+            }
             else
             {
                 return new ResponseActionClear().Result();

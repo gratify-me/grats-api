@@ -1,9 +1,7 @@
-﻿using System;
-using System.Text.RegularExpressions;
+﻿using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Gratify.Api.Commands;
 using Gratify.Api.Components;
-using Gratify.Api.Database.Entities;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Gratify.Api.Controllers
@@ -25,6 +23,7 @@ namespace Gratify.Api.Controllers
             slashCommand.Command switch
             {
                 "/grats" => await SendGrats(slashCommand),
+                "/grats-feedback" => await SendFeedback(slashCommand),
                 _ => Ok(),
             };
 
@@ -33,6 +32,13 @@ namespace Gratify.Api.Controllers
             var authorId = slashCommand.UserId;
             var userId = GetUserId(slashCommand);
             await _components.SendGrats.Open(slashCommand.TriggerId, slashCommand.TeamId, authorId, userId);
+
+            return Ok();
+        }
+
+        private async Task<IActionResult> SendFeedback(SlashCommand slashCommand)
+        {
+            await _components.SendFeedback.Open(slashCommand.TriggerId);
 
             return Ok();
         }

@@ -17,6 +17,7 @@ namespace Gratify.Api.Components.HomeTabs
     public class ShowAppHome
     {
         private readonly string _openSendGrats = $"{typeof(ShowAppHome)}.OpenSendGrats";
+        private readonly string _openSendFeedback = $"{typeof(ShowAppHome)}.OpenSendFeedback";
         private readonly string _openAddTeamMember = $"{typeof(ShowAppHome)}.OpenAddTeamMember";
         private readonly string _removeTeamMember = $"{typeof(ShowAppHome)}.RemoveTeamMember";
         private readonly string _openChangeSettings = $"{typeof(ShowAppHome)}.OpenChangeSettings";
@@ -48,7 +49,12 @@ namespace Gratify.Api.Components.HomeTabs
                     new Button(
                         id: _openSendGrats,
                         value: userId,
-                        text: ":grats: Send Grats")
+                        text: ":grats: Send Grats"),
+
+                    new Button(
+                        id: _openSendFeedback,
+                        value: userId,
+                        text: ":email: Send Feedback")
                 });
 
             return new HomeTab
@@ -83,6 +89,10 @@ namespace Gratify.Api.Components.HomeTabs
             else if (action.ActionId == _openChangeSettings)
             {
                 await OpenChangeSettings(triggerId, teamId, userId);
+            }
+            else if (action.ActionId == _openSendFeedback)
+            {
+                await _components.SendFeedback.Open(triggerId);
             }
         }
 
