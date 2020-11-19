@@ -4,6 +4,7 @@ using System.Xml;
 using System.Xml.Serialization;
 using Iso20022.Pain;
 using Iso20022.Pain.V3;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace Gratify.Api.Test
@@ -11,30 +12,26 @@ namespace Gratify.Api.Test
     public class Iso20022Test
     {
         [Fact]
-        public void GenerateXmlTest()
+        public void ShouldGenerateDocument()
         {
-            var debitor = new DebitorInformation
-            {
-                Name = "INITECH AS",
-                OrgNr = 123456789,
-                AccountNumber = "11987654321",
-                BankBusinessRegistryCode = "DEVTESTCODE",
-                BankFileTransferId = 1010,
-                CustomerFileTransferId = "SWEDANOR",
-            };
+            var configuration = Generate.Configuration();
+            var debitor = configuration.GetSection(nameof(DebitorInformation)).Get<DebitorInformation>();
+            var creditor = configuration.GetSection(nameof(CreditorInformation)).Get<CreditorInformation>();
+            var initiation = Generate.TransferInitiation(debitor, creditor);
 
-            var transaction = new CreditTransaction(
-                correlationId: Guid.NewGuid(),
-                creditorName: "Astri Iversen",
-                creditorAccount: "12345678911",
-                amountNok: 5);
+            Assert.NotNull(initiation.Document);
+        }
 
-            var initiation = new TransferInitiation(debitor, new CreditTransaction[]
-            {
-                transaction,
-            });
+        [Fact(Skip = "Only used for manual generation of Iso20022.Pain.V3 document")]
+        public void ShouldGenerateXmlFile()
+        {
+            var configuration = Generate.Configuration();
+            var debitor = configuration.GetSection(nameof(DebitorInformation)).Get<DebitorInformation>();
+            var creditor = configuration.GetSection(nameof(CreditorInformation)).Get<CreditorInformation>();
+            var initiation = Generate.TransferInitiation(debitor, creditor);
 
-            // WriteToFile(initiation);
+            WriteToFile(initiation);
+
             Assert.NotNull(initiation.Document);
         }
 
