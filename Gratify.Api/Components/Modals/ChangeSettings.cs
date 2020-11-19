@@ -77,6 +77,7 @@ namespace Gratify.Api.Components.Modals
                             options: new Option[]
                             {
                                 new Option("0"),
+                                new Option("1"),
                                 new Option("50"),
                                 new Option("1500"),
                                 new Option("3000"),
