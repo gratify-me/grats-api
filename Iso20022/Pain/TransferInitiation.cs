@@ -1,5 +1,8 @@
 using System;
+using System.IO;
 using System.Linq;
+using System.Xml;
+using System.Xml.Serialization;
 using Iso20022.Pain.V3;
 
 namespace Iso20022.Pain
@@ -38,11 +41,27 @@ namespace Iso20022.Pain
                 .SelectMany(instruction => instruction.CdtTrfTxInf)
                 .Sum(transaction => transaction.Amt.InstdAmt.Value);
 
-        public string FileName(bool asTest = false)
-        {
-            var messageType = "P001"; // Related to the ISO20022 message type.
+        public string TempFileName(bool asTest = false) => FileName(asDatFile: false, asTest);
 
-            return $"{(asTest ? "T." : "P.")}00{Debitor.OrgNr}.{Debitor.BankFileTransferId}.{messageType}.{Id.ToString()}.{Debitor.CustomerFileTransferId}.xml";
+        public string FileName(bool asTest = false) => FileName(asDatFile: true, asTest);
+
+        public string FileName(bool asDatFile, bool asTest = false) =>
+            $"{(asTest ? "T." : "P.")}00{Debitor.OrgNr}.{Debitor.BankFileTransferId}.P001.{Id.ToString()}.{Debitor.CustomerFileTransferId}.{(asDatFile ? "DAT" : "xml")}";
+
+        public void WriteToStream(Stream stream)
+        {
+            var serializer = new XmlSerializer(typeof(Document));
+            var settings = new XmlWriterSettings
+            {
+                Indent = true,
+                NewLineChars = "\r\n"
+            };
+
+            using(var writer = XmlWriter.Create(stream, settings))
+            {
+                serializer.Serialize(writer, Document);
+                stream.Position = 0;
+            }
         }
 
         private Document CreditTransferInitiationDocument(
