@@ -3,13 +3,10 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
-using System.Xml.Serialization;
 using Azure.Storage.Blobs;
 using Gratify.Api.Components;
 using Gratify.Api.Database;
 using Iso20022.Pain;
-using Iso20022.Pain.V3;
 using Microsoft.ApplicationInsights;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,14 +22,16 @@ namespace Gratify.Api.Services
         private readonly TelemetryClient _telemetry;
         private readonly SlackService _slackService;
         private readonly DebitorInformation _debitor;
+        private readonly CreditTransferClient _transferClient;
         private readonly BlobServiceClient _blobClient;
 
-        public InitiateCreditTransfer(IServiceProvider services, TelemetryClient telemetry, SlackService slackService, DebitorInformation debitor, BlobServiceClient blobClient)
+        public InitiateCreditTransfer(IServiceProvider services, TelemetryClient telemetry, SlackService slackService, DebitorInformation debitor, CreditTransferClient transferClient, BlobServiceClient blobClient)
         {
             _services = services;
             _telemetry = telemetry;
             _slackService = slackService;
             _debitor = debitor;
+            _transferClient = transferClient;
             _blobClient = blobClient;
         }
 
@@ -48,6 +47,9 @@ namespace Gratify.Api.Services
                 var components = scope.ServiceProvider.GetRequiredService<ComponentsService>();
 
                 var pendingReceivals = await database.Receivals
+                    .Include(receival => receival.Approval)
+                        .ThenInclude(approval => approval.Review)
+                            .ThenInclude(review => review.Grats)
                     .Where(receival => !receival.CreditTransferInitiated)
                     .Take(10)
                     .ToArrayAsync();
@@ -57,6 +59,9 @@ namespace Gratify.Api.Services
                     foreach (var receival in pendingReceivals)
                     {
                         receival.CreditTransferInitiated = true;
+
+                        var notifyReceiver = await components.GratsReceived.UpdateMoneySent(receival);
+                        await _slackService.UpdateMessage(notifyReceiver);
                     }
 
                     var transactions = pendingReceivals
@@ -67,6 +72,7 @@ namespace Gratify.Api.Services
                             amountNok: receival.AmountReceived));
 
                     var initiation = new TransferInitiation(_debitor, transactions.ToArray());
+                    _transferClient.UploadTransferInitiation(initiation);
                     await UploadDocument(containerClient, initiation);
                     await database.SaveChangesAsync();
                 }
@@ -77,21 +83,11 @@ namespace Gratify.Api.Services
 
         private async Task UploadDocument(BlobContainerClient client, TransferInitiation initiation)
         {
-            var serializer = new XmlSerializer(typeof(Document));
-            var settings = new XmlWriterSettings
-            {
-                Indent = true,
-                NewLineChars = "\r\n"
-            };
-
             using var stream = new MemoryStream();
-            using var writer = XmlWriter.Create(stream, settings);
-
-            serializer.Serialize(writer, initiation.Document);
+            initiation.WriteToStream(stream);
 
             var fileName = initiation.FileName();
             var blobClient = client.GetBlobClient(fileName);
-            stream.Position = 0;
             await blobClient.UploadAsync(stream);
 
             stream.Close();

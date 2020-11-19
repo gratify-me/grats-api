@@ -60,6 +60,14 @@ namespace Gratify.Api.Components.Messages
             });
         }
 
+        public async Task<UpdateMessage> UpdateMoneySent(Receival receival)
+        {
+            return await UpdateMessage(receival.Approval, new MrkdwnText[]
+            {
+                new MrkdwnText($"Money sent! It should be in your account by tomorrow :moneybag:")
+            });
+        }
+
         public async Task OnSubmit(Action action, string triggerId, string userId)
         {
             var modal = await _components.RegisterAccountDetails.Modal(action.CorrelationId, userId);

@@ -56,16 +56,20 @@ namespace Gratify.Api
                     options.JsonSerializerOptions.Converters.Add(new MessagePayloadConverter());
                 });
 
-            var databaseSettings = Configuration.GetSection("DatabaseSettings").Get<DatabaseSettings>();
+            var databaseSettings = Configuration.GetSection(nameof(DatabaseSettings)).Get<DatabaseSettings>();
             services.AddGratsDb(databaseSettings);
 
             services.AddScoped<ComponentsService>();
 
-            var emailSettings = Configuration.GetSection("EmailSettings").Get<EmailSettings>();
+            var emailSettings = Configuration.GetSection(nameof(EmailSettings)).Get<EmailSettings>();
             services.AddSingleton(emailSettings);
             services.AddTransient<EmailClient>();
 
-            var debitorInformation = Configuration.GetSection("DebitorInformation").Get<DebitorInformation>();
+            var creditTransferSettings = Configuration.GetSection(nameof(CreditTransferSettings)).Get<CreditTransferSettings>();
+            services.AddSingleton(creditTransferSettings);
+            services.AddTransient<CreditTransferClient>();
+
+            var debitorInformation = Configuration.GetSection(nameof(DebitorInformation)).Get<DebitorInformation>();
             var storageAccountConnectionString = Configuration.GetValue<string>("StorageAccountConnectionString");
             if (!string.IsNullOrEmpty(storageAccountConnectionString))
             {
