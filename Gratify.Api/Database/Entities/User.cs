@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Gratify.Api.Database.Entities
@@ -36,5 +37,11 @@ namespace Gratify.Api.Database.Entities
 
         [MaxLength(11)]
         public string AccountNumber { get; set; }
+
+        [Required]
+        // TODO: Maybe set this value based on when the user was added?
+        // Then a reminder wouldn't arrive before some time has passed.
+        // Also add/substract some random days and hours to avoid everyone beeing notified at the same time?
+        public DateTime LastRemindedAt { get; set; } = DateTime.MinValue;
     }
 }
