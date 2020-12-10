@@ -13,12 +13,14 @@ namespace Gratify.Api.Services
 {
     public class ImportUsers : BackgroundService
     {
+        private readonly Random _random;
         private readonly IServiceProvider _services;
         private readonly TelemetryClient _telemetry;
         private readonly SlackService _slackService;
 
         public ImportUsers(IServiceProvider services, TelemetryClient telemetry, SlackService slackService)
         {
+            _random = new Random();
             _services = services;
             _telemetry = telemetry;
             _slackService = slackService;
@@ -51,7 +53,8 @@ namespace Gratify.Api.Services
                             userId: slackUser.Id,
                             isEligibleForGrats: IsEligibleForGrats(slackUser),
                             isAdministrator: IsAdministrator(slackUser),
-                            updatedAt: slackUser.Updated);
+                            updatedAt: slackUser.Updated,
+                            lastRemindedAt: InitialLastRemindedAt);
 
                         await database.Users.AddAsync(newUser);
                         await database.SaveChangesAsync();
@@ -83,5 +86,10 @@ namespace Gratify.Api.Services
             slackUser.IsAdmin ||
             slackUser.IsOwner ||
             slackUser.IsPrimaryOwner;
+
+        private DateTime InitialLastRemindedAt =>
+            DateTime.UtcNow
+                .AddDays(_random.Next(0, 7))
+                .AddHours(_random.Next(9, 14));
     }
 }

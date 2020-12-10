@@ -5,7 +5,7 @@ namespace Gratify.Api.Database.Entities
 {
     public class User : Entity
     {
-        public User(string teamId, string userId, bool isEligibleForGrats, bool isAdministrator, long updatedAt, string defaultReviewer = null, bool hasReports = false)
+        public User(string teamId, string userId, bool isEligibleForGrats, bool isAdministrator, long updatedAt, DateTime lastRemindedAt = default, string defaultReviewer = null, bool hasReports = false)
         {
             TeamId = teamId;
             UserId = userId;
@@ -14,6 +14,7 @@ namespace Gratify.Api.Database.Entities
             UpdatedAt = updatedAt;
             DefaultReviewer = defaultReviewer;
             HasReports = hasReports;
+            LastRemindedAt = lastRemindedAt == default ? DateTime.UtcNow : lastRemindedAt;
         }
 
         [MinLength(1)]
@@ -39,9 +40,6 @@ namespace Gratify.Api.Database.Entities
         public string AccountNumber { get; set; }
 
         [Required]
-        // TODO: Maybe set this value based on when the user was added?
-        // Then a reminder wouldn't arrive before some time has passed.
-        // Also add/substract some random days and hours to avoid everyone beeing notified at the same time?
         public DateTime LastRemindedAt { get; set; } = DateTime.MinValue;
     }
 }
