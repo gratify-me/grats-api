@@ -51,6 +51,16 @@ namespace Gratify.Api.Database
             return defaultSettings;
         }
 
+        public IQueryable<Grats> PendingAndApprovedGratsFor(string userId, int gratsPeriodInDays) =>
+            Grats
+                .Where(grats => grats.Author == userId)
+                .Where(grats => grats.CreatedAt > DateTime.UtcNow.AddDays(-gratsPeriodInDays))
+                .Where(grats =>
+                    !grats.Reviews.Any()
+                    || grats.Reviews.Any(review => review.Approval != null)
+                    || grats.Reviews.All(review => review.Approval == null && review.Denial == null))
+                .OrderByDescending(grats => grats.CreatedAt);
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Settings>()

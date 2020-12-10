@@ -128,14 +128,7 @@ namespace Gratify.Api.Components.Modals
         {
             var correlationId = Guid.NewGuid();
             var settings = await _database.SettingsFor(teamId, authorId);
-            var pendingAndApprovedGratsLastPeriod = _database.Grats
-                .Where(grats => grats.Author == authorId)
-                .Where(grats => grats.CreatedAt > DateTime.UtcNow.AddDays(-settings.GratsPeriodInDays))
-                .Where(grats =>
-                    !grats.Reviews.Any()
-                    || grats.Reviews.Any(review => review.Approval != null)
-                    || grats.Reviews.All(review => review.Approval == null && review.Denial == null))
-                .OrderByDescending(grats => grats.CreatedAt);
+            var pendingAndApprovedGratsLastPeriod = _database.PendingAndApprovedGratsFor(authorId, settings.GratsPeriodInDays);
 
             if (await pendingAndApprovedGratsLastPeriod.CountAsync() >= settings.NumberOfGratsPerPeriod)
             {
