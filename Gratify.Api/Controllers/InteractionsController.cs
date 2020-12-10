@@ -132,6 +132,10 @@ namespace Gratify.Api.Controllers
             {
                 await _components.ShowAppHome.OnSubmit(action, triggerId, userId, teamId);
             }
+            else if (action.ActionId.Contains(typeof(GratsRemaining).ToString()))
+            {
+                await _components.GratsRemaining.OnSubmit(action, triggerId, userId, teamId);
+            }
         }
     }
 }

@@ -311,6 +311,9 @@ namespace Gratify.Api.Migrations
                     b.Property<bool>("IsEligibleForGrats")
                         .HasColumnType("bit");
 
+                    b.Property<DateTime>("LastRemindedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("TeamId")
                         .IsRequired()
                         .HasColumnType("nvarchar(100)")
