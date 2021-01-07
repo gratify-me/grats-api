@@ -44,22 +44,24 @@ jobs:
           --configuration Release \
           --no-build
 
-    - name: Login to Azure
-      if: github.ref == 'refs/heads/master'
-      uses: azure/login@v1
-      with:
-        creds: ${{secrets.AZURE_CREDENTIALS}}
+    # Avoid logging in to Azure until deploy is fixed
+    # - name: Login to Azure
+    #   if: github.ref == 'refs/heads/master'
+    #   uses: azure/login@v1
+    #   with:
+    #     creds: ${{secrets.AZURE_CREDENTIALS}}
 
-    - name: Create resource group
-      if: github.ref == 'refs/heads/master'
-      uses: azure/CLI@v1
-      with:
-        azcliversion: 2.0.72
-        inlineScript: |
-          az group create \
-            --verbose \
-            --location northeurope \
-            --name ${{env.RESOURCE_GROUP_NAME}}
+    # Avoid creating new resource group until deploy is fixed
+    # - name: Create resource group
+    #   if: github.ref == 'refs/heads/master'
+    #   uses: azure/CLI@v1
+    #   with:
+    #     azcliversion: 2.0.72
+    #     inlineScript: |
+    #       az group create \
+    #         --verbose \
+    #         --location northeurope \
+    #         --name ${{env.RESOURCE_GROUP_NAME}}
 
     # ARM template is not complete, so skipping this for now
     # - name: Deploy ARM template
@@ -73,9 +75,10 @@ jobs:
     #         --resource-group ${{env.RESOURCE_GROUP_NAME}} \
     #         --template-file arm-template.json
 
-    - name: 'Deploy Grats.Api'
-      if: github.ref == 'refs/heads/master'
-      uses: azure/webapps-deploy@v1
-      with:
-        app-name: grats-api
-        package: ${{env.DOTNET_ROOT}}/app
+    # Avoid deploying new version until static IP on Azure is fixed
+    # - name: 'Deploy Grats.Api'
+    #   if: github.ref == 'refs/heads/master'
+    #   uses: azure/webapps-deploy@v1
+    #   with:
+    #     app-name: grats-api
+    #     package: ${{env.DOTNET_ROOT}}/app
