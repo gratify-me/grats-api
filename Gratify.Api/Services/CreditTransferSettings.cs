@@ -16,7 +16,7 @@ namespace Gratify.Api.Services
 
         public string KeyFilePassword { get; set; }
 
-        public PrivateKeyFile PrivateKeyFile =>
+        public PrivateKeyFile GetPrivateKeyFile() =>
             new PrivateKeyFile(
                 fileName: KeyFilePath,
                 passPhrase: KeyFilePassword);
@@ -25,11 +25,11 @@ namespace Gratify.Api.Services
 
         public int SftpPort { get; set; } = 22;
 
-        public ConnectionInfo ConnectionInfo =>
+        public ConnectionInfo GetConnectionInfo() =>
             new ConnectionInfo(
                 host: SftpHost,
                 port: SftpPort,
                 username: Username,
-                new PrivateKeyAuthenticationMethod(Username, PrivateKeyFile));
+                new PrivateKeyAuthenticationMethod(Username, GetPrivateKeyFile()));
     }
 }

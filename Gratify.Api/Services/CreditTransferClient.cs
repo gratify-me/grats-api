@@ -20,7 +20,7 @@ namespace Gratify.Api.Services
         public bool UploadTransferInitiation(TransferInitiation initiation)
         {
             var success = false;
-            using var client = new SftpClient(_settings.ConnectionInfo);
+            using var client = new SftpClient(_settings.GetConnectionInfo());
             using var stream = new MemoryStream();
             try
             {

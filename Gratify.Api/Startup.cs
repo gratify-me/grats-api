@@ -71,7 +71,7 @@ namespace Gratify.Api
 
             var debitorInformation = Configuration.GetSection(nameof(DebitorInformation)).Get<DebitorInformation>();
             var storageAccountConnectionString = Configuration.GetValue<string>("StorageAccountConnectionString");
-            if (!string.IsNullOrEmpty(storageAccountConnectionString))
+            if (!string.IsNullOrEmpty(storageAccountConnectionString) && !storageAccountConnectionString.Contains('<'))
             {
                 services.AddSingleton(debitorInformation);
                 services.AddTransient(services => new BlobServiceClient(storageAccountConnectionString));
