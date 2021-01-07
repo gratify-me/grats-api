@@ -238,11 +238,7 @@ namespace Gratify.Api.Components.HomeTabs
 
                 new Divider(),
 
-                new Section(
-                    id: "SettingsContent",
-                    text: $"Grats period in days: *{settings.GratsPeriodInDays}*\n"
-                        + $"Number of Grats per period: *{settings.NumberOfGratsPerPeriod}*\n"
-                        + $"Amount of money per Grats: *{settings.AmountPerGrats}*"),
+                new Section(id: "SettingsContent", text: PredefinedSetting.From(settings).Description()),
             };
         }
 

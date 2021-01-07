@@ -39,67 +39,27 @@ namespace Gratify.Api.Components.Modals
                 blocks: new LayoutBlock[]
                 {
                     new Input(
-                        id: "SelectGratsPeriod",
-                        label: ":calendar: Grats period in days",
+                        id: "SelectHowUsersCanSendGrats",
+                        label: ":question: How can users send Grats?",
                         element: new StaticSelect(
-                            id: "GratsPeriodInDays",
-                            initialOption: new Option(settings.GratsPeriodInDays.ToString()),
-                            options: Enumerable
-                                .Range(0, 31)
-                                .Select(n => new Option(n.ToString()))
+                            id: "UsersCanSendGrats",
+                            initialOption: new Option(PredefinedSetting.From(settings).Description()),
+                            options: PredefinedSetting.AllPredefinedSettings
+                                .Select(setting => new Option(setting.Description()))
                                 .ToArray())),
-
-                    new Section(
-                        id: "SelectGratsPeriodInfo",
-                        text: "Use *0* if you don't wish to use a Grats period"),
-
-                    new Input(
-                        id: "SelectNumberOfGrats",
-                        label: ":grats: Number of Grats per period",
-                        element: new StaticSelect(
-                            id: "NumberOfGratsPerPeriod",
-                            initialOption: new Option(settings.NumberOfGratsPerPeriod.ToString()),
-                            options: Enumerable
-                                .Range(1, 11)
-                                .Select(n => new Option(n.ToString()))
-                                .ToArray())),
-
-                    new Section(
-                        id: "SelectNumberOfGratsInfo",
-                        text: "The number of Grats a user can send every period"),
-
-                    new Input(
-                        id: "SelectAmountPerGrats",
-                        label: ":moneybag: Amount of money per Grats",
-                        element: new StaticSelect(
-                            id: "AmountPerGrats",
-                            initialOption: new Option(settings.AmountPerGrats.ToString()),
-                            options: new Option[]
-                            {
-                                new Option("0"),
-                                new Option("1"),
-                                new Option("50"),
-                                new Option("1500"),
-                                new Option("3000"),
-                            })),
-
-                    new Section(
-                        id: "SelectAmountPerGratsInfo",
-                        text: "The amount of money a user receives as part of the Grats"),
                 });
 
         public async Task<ResponseAction> OnSubmit(ViewSubmission submission)
         {
-            var gratsPeriodInDays = submission.GetStateValue<StaticSelect>("SelectGratsPeriod.GratsPeriodInDays");
-            var numberOfGratsPerPeriod = submission.GetStateValue<StaticSelect>("SelectNumberOfGrats.NumberOfGratsPerPeriod");
-            var amountPerGrats = submission.GetStateValue<StaticSelect>("SelectAmountPerGrats.AmountPerGrats");
+            var usersCanSendGrats = submission.GetStateValue<StaticSelect>("SelectHowUsersCanSendGrats.UsersCanSendGrats");
+            var predefinedSetting = PredefinedSetting.From(usersCanSendGrats.SelectedOption.Value);
 
             await SaveNewSettings(
                 teamId: submission.Team.Id,
                 userId: submission.User.Id,
-                gratsPeriodInDays: int.Parse(gratsPeriodInDays.SelectedOption.Value),
-                numberOfGratsPerPeriod: int.Parse(numberOfGratsPerPeriod.SelectedOption.Value),
-                amountPerGrats: int.Parse(amountPerGrats.SelectedOption.Value));
+                gratsPeriodInDays: predefinedSetting.GratsPeriodInDays,
+                numberOfGratsPerPeriod: predefinedSetting.NumberOfGratsPerPeriod,
+                amountPerGrats: predefinedSetting.AmountPerGrats);
 
             return new ResponseActionClose();
         }
