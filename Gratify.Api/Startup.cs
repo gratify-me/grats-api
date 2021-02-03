@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using Azure.Storage.Blobs;
 using Gratify.Api.Components;
 using Gratify.Api.Database;
+using Gratify.Api.Security;
 using Gratify.Api.Services;
 using Iso20022.Pain;
 using Microsoft.AspNetCore.Builder;
@@ -59,6 +60,7 @@ namespace Gratify.Api
             var databaseSettings = Configuration.GetSection(nameof(DatabaseSettings)).Get<DatabaseSettings>();
             services.AddGratsDb(databaseSettings);
 
+            services.AddSlackAuthentication(Configuration["SlackApiSigningSecret"]);
             services.AddScoped<ComponentsService>();
 
             var emailSettings = Configuration.GetSection(nameof(EmailSettings)).Get<EmailSettings>();
@@ -101,7 +103,7 @@ namespace Gratify.Api
                 // TODO: This breaks ngrok, and with that, local proxying against slack. Should disable this for local development.
                 // .UseHttpsRedirection()
                 .UseRouting()
-                .UseAuthorization()
+                .UseSlackAuthentication()
                 .UseEndpoints(endpoints => endpoints.MapControllers());
         }
     }

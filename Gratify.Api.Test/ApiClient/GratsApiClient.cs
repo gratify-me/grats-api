@@ -4,7 +4,7 @@ using System.IO;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace Gratify.Api.Test
+namespace Gratify.Api.Test.ApiClient
 {
     public class GratsApiClient : IDisposable
     {

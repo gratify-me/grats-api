@@ -2,19 +2,18 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
+using Gratify.Api.Test.ApiClient;
 using Xunit;
 
 namespace Gratify.Api.Test
 {
-    public class InteractiveTest : IClassFixture<WebApplicationFactory<Startup>>, IDisposable
+    public class InteractiveTest : IClassFixture<GratsApiClientFactory<Startup>>, IDisposable
     {
         private readonly GratsApiClient _client;
 
-        public InteractiveTest(WebApplicationFactory<Startup> applicationFactory)
+        public InteractiveTest(GratsApiClientFactory<Startup> applicationFactory)
         {
-            var httpClient = applicationFactory.CreateClient();
-            _client = new GratsApiClient(httpClient);
+            _client = applicationFactory.CreateApiClient();
         }
 
         [Fact]

@@ -1,23 +1,22 @@
 using System;
 using System.Threading.Tasks;
 using FluentAssertions;
-using Microsoft.AspNetCore.Mvc.Testing;
+using Gratify.Api.Test.ApiClient;
 using Xunit;
 
 namespace Gratify.Api.Test
 {
-    public class PingTest : IClassFixture<WebApplicationFactory<Startup>>, IDisposable
+    public class PingTest : IClassFixture<GratsApiClientFactory<Startup>>, IDisposable
     {
         private readonly GratsApiClient _client;
 
-        public PingTest(WebApplicationFactory<Startup> applicationFactory)
+        public PingTest(GratsApiClientFactory<Startup> applicationFactory)
         {
-            var httpClient = applicationFactory.CreateClient();
-            _client = new GratsApiClient(httpClient);
+            _client = applicationFactory.CreateApiClient();
         }
 
         [Fact]
-        public async Task Test1()
+        public async Task ShouldReturnPong()
         {
             var pong = await _client.Ping();
             pong.Should().Be("PONG");
